@@ -1,0 +1,52 @@
+import networkx as nx
+import pandas as pd
+import numpy as np
+import pickle
+
+G = pickle.load(open('assets/email_prediction_NEW.txt', 'rb'))
+
+print(f"Graph with {len(nx.nodes(G))} nodes and {len(nx.edges(G))} edges")
+
+def salary_predictions():
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import train_test_split    
+
+    d = {'person':pd.Series(data=list(nx.nodes(G)), index = [i for i in nx.nodes(G)]),
+     'clust':pd.Series(data=nx.clustering(G), index=[i for i in nx.nodes(G)]),
+     'deg_centr':pd.Series(data=nx.degree_centrality(G), index = [i for i in nx.nodes(G)]), 
+     'close_centr':pd.Series(data=nx.closeness_centrality(G), index = [i for i in nx.nodes(G)]),
+     'betw_centr':pd.Series(nx.betweenness_centrality(G), index = [i for i in nx.nodes(G)]),
+     'page_rank':pd.Series(data=nx.pagerank(G), index = [i for i in nx.nodes(G)]), 
+     'edge count':pd.Series(data=[len(nx.edges(G)([i])) for i in (nx.nodes(G))], index=[i for i in (nx.nodes(G))]),
+     'department':pd.Series(data=[nx.nodes(G)(data=True)[i]['Department'] for i in nx.nodes(G)], index = [i for i in nx.nodes(G)]),
+     'man_salary':pd.Series(data=[nx.nodes(G)(data=True)[i]['ManagementSalary'] for i in nx.nodes(G)], index = [i for i in nx.nodes(G)])}
+    people_df = pd.DataFrame(data=d) ### to jest df ze wszystkimi pracownikami - 1005 wierszy    
+    provided_man_sal = people_df.dropna() ### to jest df z pracownikami dla których podano wartości management salary (0 lub 1), 753 wiersze
+    missing_man_sal = people_df[people_df.isnull().any(axis=1)] ### to jest df z pracownikami, dla których nie podano wartości management salary (NaN), 252 wiersze
+
+    X = provided_man_sal[['person', 'clust', 'deg_centr', 'close_centr', 'betw_centr', 'page_rank', 'edge count', 'department']]
+    y = provided_man_sal['man_salary']
+    XX = missing_man_sal[['person', 'clust', 'deg_centr', 'close_centr', 'betw_centr', 'page_rank', 'edge count', 'department']]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y , test_size=0.25, random_state=0)
+
+    clf_SS = StandardScaler()
+    X_train = clf_SS.fit_transform(X_train)    
+    X_test = clf_SS.transform(X_test)
+
+    clf_RF = RandomForestClassifier(random_state=11, n_estimators=4, max_depth=9)
+    clf_RF.fit(X_train, y_train)                
+    #pr_RF = clf_RF.predict(X_test)
+
+    new_df = missing_man_sal.reset_index()
+    new_df['probability of managment salary'] = pd.Series(clf_RF.predict_proba(XX)[:, 1])
+    new_df_2 = new_df.set_index('index')
+    new_df_2.index.name = None
+    solution = pd.Series(new_df_2['probability of managment salary'])
+        
+    #raise NotImplementedError()
+    return solution
+
+salary_predictions()
+
