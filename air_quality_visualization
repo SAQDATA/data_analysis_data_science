@@ -1,0 +1,981 @@
+### The graph that will be created in the end of this code will show mean daily values of concentration of the six air pollutants
+### that are components of the Air Quality Index: Nitrogen dioxide (NO2), Particulate matter 2.5 micrometres or less (PM2.5), Particulate matter 10 micrometres or less (PM10),
+### Sulfur dioxide (SO2), Ozone (O3), and Carbon monoxide (CO), for periods 2012-2019 and 2020-2021 (pre-COVID-19 pademics and during COVID-19 pandemics).
+
+### Measurements are collected in the capital of Poland - Warsaw.
+
+### The goal of the visualization is to learn if during the national lockdowns, when traffic was very limited, and during pandemics in general, the air quality improved or not.
+
+### The datasets used for this analysis and visualization are from publicly available data by the Chief Inspectorate Of Environmental Protection (zip files):
+# year 2012: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/233
+# year 2013: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/234
+# year 2014: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/302
+# year 2015: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/236
+# year 2016: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/242
+# year 2017: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/262
+# year 2018: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/303
+# year 2019: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/322
+# year 2020: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/424
+# year 2021: https://powietrze.gios.gov.pl/pjp/archives/downloadFile/486
+
+### Measurements for each air pollutant are in separate Excel file, so loading all data is time consuming process.
+
+from zipfile import ZipFile
+import io
+from urllib.request import urlopen
+import pandas as pd
+import re
+import matplotlib.pyplot as plt
+from calendar import month_abbr
+import numpy as np
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
+from matplotlib.ticker import MaxNLocator
+import matplotlib.patches as mpatches
+
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
+# Measurement stations in Warsaw are named "MzWar......."
+warsaw_pattern = '.*(MzWar).*'
+
+date_pattern = '([0-9]{4}\-[0-9]{2}\-[0-9]{2}).*'
+
+# To exclude lear years from analysis:
+leap_year = '[0-9]{4}\-([0][2]\-[2][9])'
+
+# Air 2012
+air_2012 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/233').read()
+data_2012 = ZipFile(io.BytesIO(air_2012))
+
+NO2_2012_WAW = pd.read_excel(data_2012.open('2012_NO2_1g.xlsx'))[2:].copy()
+NO2_2012_WAW = NO2_2012_WAW.rename(columns={"Kod stacji": "date"})
+NO2_2012_WAW['date'] = NO2_2012_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2012_WAW = NO2_2012_WAW[~NO2_2012_WAW['date'].str.contains(leap_year)]
+NO2_2012_WAW['date'] = pd.to_datetime(NO2_2012_WAW['date'])
+NO2_2012_WAW_draft = NO2_2012_WAW.groupby('date').mean()
+NO2_2012_WAW_draft = NO2_2012_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2012_WAW_draft['WAW_NO2_mean'] = NO2_2012_WAW_draft.mean(axis=1)
+
+PM25_2012_WAW = pd.read_excel(data_2012.open('2012_PM2.5_1g.xlsx'))[2:].copy()
+PM25_2012_WAW = PM25_2012_WAW.rename(columns={"Kod stacji": "date"})
+PM25_2012_WAW['date'] = PM25_2012_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2012_WAW = PM25_2012_WAW[~PM25_2012_WAW['date'].str.contains(leap_year)]
+PM25_2012_WAW['date'] = pd.to_datetime(PM25_2012_WAW['date'])
+PM25_2012_WAW_draft = PM25_2012_WAW.groupby('date').mean()
+PM25_2012_WAW_draft = PM25_2012_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2012_WAW_draft['WAW_PM2.5_mean'] = PM25_2012_WAW_draft.mean(axis=1)
+
+PM10_2012_WAW = pd.read_excel(data_2012.open('2012_PM10_1g.xlsx'))[2:].copy()
+PM10_2012_WAW = PM10_2012_WAW.rename(columns={"Kod stacji": "date"})
+PM10_2012_WAW['date'] = PM10_2012_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2012_WAW = PM10_2012_WAW[~PM10_2012_WAW['date'].str.contains(leap_year)]
+PM10_2012_WAW['date'] = pd.to_datetime(PM10_2012_WAW['date'])
+PM10_2012_WAW_draft = PM10_2012_WAW.groupby('date').mean()
+PM10_2012_WAW_draft = PM10_2012_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2012_WAW_draft['WAW_PM10_mean'] = PM10_2012_WAW_draft.mean(axis=1)
+
+SO2_2012_WAW = pd.read_excel(data_2012.open('2012_SO2_1g.xlsx'))[2:].copy()
+SO2_2012_WAW = SO2_2012_WAW.rename(columns={"Kod stacji": "date"})
+SO2_2012_WAW['date'] = SO2_2012_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2012_WAW = SO2_2012_WAW[~SO2_2012_WAW['date'].str.contains(leap_year)]
+SO2_2012_WAW['date'] = pd.to_datetime(SO2_2012_WAW['date'])
+SO2_2012_WAW_draft = SO2_2012_WAW.groupby('date').mean()
+SO2_2012_WAW_draft = SO2_2012_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2012_WAW_draft['WAW_SO2_mean'] = SO2_2012_WAW_draft.mean(axis=1)
+
+CO_2012_WAW = pd.read_excel(data_2012.open('2012_CO_1g.xlsx'))[2:].copy()
+CO_2012_WAW = CO_2012_WAW.rename(columns={"Kod stacji": "date"})
+CO_2012_WAW['date'] = CO_2012_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2012_WAW = CO_2012_WAW[~CO_2012_WAW['date'].str.contains(leap_year)]
+CO_2012_WAW['date'] = pd.to_datetime(CO_2012_WAW['date'])
+CO_2012_WAW_draft = CO_2012_WAW.groupby('date').mean()
+CO_2012_WAW_draft = CO_2012_WAW_draft.filter(regex = warsaw_pattern)
+CO_2012_WAW_draft['WAW_CO_mean'] = CO_2012_WAW_draft.mean(axis=1)
+
+O3_2012_WAW = pd.read_excel(data_2012.open('2012_O3_1g.xlsx'))[2:].copy()
+O3_2012_WAW = O3_2012_WAW.rename(columns={"Kod stacji": "date"})
+O3_2012_WAW['date'] = O3_2012_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2012_WAW = O3_2012_WAW[~O3_2012_WAW['date'].str.contains(leap_year)]
+O3_2012_WAW['date'] = pd.to_datetime(O3_2012_WAW['date'])
+O3_2012_WAW_draft = O3_2012_WAW.groupby('date').mean()
+O3_2012_WAW_draft = O3_2012_WAW_draft.filter(regex = warsaw_pattern)
+O3_2012_WAW_draft['WAW_O3_mean'] = O3_2012_WAW_draft.mean(axis=1)
+
+air_WAW_2012 = [NO2_2012_WAW_draft['WAW_NO2_mean'], PM25_2012_WAW_draft['WAW_PM2.5_mean'], PM10_2012_WAW_draft['WAW_PM10_mean'], SO2_2012_WAW_draft['WAW_SO2_mean'], CO_2012_WAW_draft['WAW_CO_mean'], O3_2012_WAW_draft['WAW_O3_mean']]
+air_WAW_2012_final = pd.concat(air_WAW_2012, axis=1)
+air_WAW_2012_final = air_WAW_2012_final.drop(air_WAW_2012_final.index[-1])
+
+#Air 2013
+air_2013 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/234').read()
+data_2013 = ZipFile(io.BytesIO(air_2013))
+
+NO2_2013_WAW = pd.read_excel(data_2013.open('2013_NO2_1g.xlsx'))[2:].copy()
+NO2_2013_WAW = NO2_2013_WAW.rename(columns={"Kod stacji": "date"})
+NO2_2013_WAW['date'] = NO2_2013_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2013_WAW = NO2_2013_WAW[~NO2_2013_WAW['date'].str.contains(leap_year)]
+NO2_2013_WAW['date'] = pd.to_datetime(NO2_2013_WAW['date'])
+NO2_2013_WAW_draft = NO2_2013_WAW.groupby('date').mean()
+NO2_2013_WAW_draft = NO2_2013_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2013_WAW_draft['WAW_NO2_mean'] = NO2_2013_WAW_draft.mean(axis=1)
+
+PM25_2013_WAW = pd.read_excel(data_2013.open('2013_PM2.5_1g.xlsx'))[2:].copy()
+PM25_2013_WAW = PM25_2013_WAW.rename(columns={"Kod stacji": "date"})
+PM25_2013_WAW['date'] = PM25_2013_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2013_WAW = PM25_2013_WAW[~PM25_2013_WAW['date'].str.contains(leap_year)]
+PM25_2013_WAW['date'] = pd.to_datetime(PM25_2013_WAW['date'])
+PM25_2013_WAW_draft = PM25_2013_WAW.groupby('date').mean()
+PM25_2013_WAW_draft = PM25_2013_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2013_WAW_draft['WAW_PM2.5_mean'] = PM25_2013_WAW_draft.mean(axis=1)
+
+PM10_2013_WAW = pd.read_excel(data_2013.open('2013_PM10_1g.xlsx'))[2:].copy()
+PM10_2013_WAW = PM10_2013_WAW.rename(columns={"Kod stacji": "date"})
+PM10_2013_WAW['date'] = PM10_2013_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2013_WAW = PM10_2013_WAW[~PM10_2013_WAW['date'].str.contains(leap_year)]
+PM10_2013_WAW['date'] = pd.to_datetime(PM10_2013_WAW['date'])
+PM10_2013_WAW_draft = PM10_2013_WAW.groupby('date').mean()
+PM10_2013_WAW_draft = PM10_2013_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2013_WAW_draft['WAW_PM10_mean'] = PM10_2013_WAW_draft.mean(axis=1)
+
+SO2_2013_WAW = pd.read_excel(data_2013.open('2013_SO2_1g.xlsx'))[2:].copy()
+SO2_2013_WAW = SO2_2013_WAW.rename(columns={"Kod stacji": "date"})
+SO2_2013_WAW['date'] = SO2_2013_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2013_WAW['date'] = pd.to_datetime(SO2_2013_WAW['date'])
+SO2_2013_WAW_draft = SO2_2013_WAW.groupby('date').mean()
+SO2_2013_WAW_draft = SO2_2013_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2013_WAW_draft['WAW_SO2_mean'] = SO2_2013_WAW_draft.mean(axis=1)
+
+CO_2013_WAW = pd.read_excel(data_2013.open('2013_CO_1g.xlsx'))[2:].copy()
+CO_2013_WAW = CO_2013_WAW.rename(columns={"Kod stacji": "date"})
+CO_2013_WAW['date'] = CO_2013_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2013_WAW['date'] = pd.to_datetime(CO_2013_WAW['date'])
+CO_2013_WAW_draft = CO_2013_WAW.groupby('date').mean()
+CO_2013_WAW_draft = CO_2013_WAW_draft.filter(regex = warsaw_pattern)
+CO_2013_WAW_draft['WAW_CO_mean'] = CO_2013_WAW_draft.mean(axis=1)
+
+O3_2013_WAW = pd.read_excel(data_2013.open('2013_O3_1g.xlsx'))[2:].copy()
+O3_2013_WAW = O3_2013_WAW.rename(columns={"Kod stacji": "date"})
+O3_2013_WAW['date'] = O3_2013_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2013_WAW['date'] = pd.to_datetime(O3_2013_WAW['date'])
+O3_2013_WAW_draft = O3_2013_WAW.groupby('date').mean()
+O3_2013_WAW_draft = O3_2013_WAW_draft.filter(regex = warsaw_pattern)
+O3_2013_WAW_draft['WAW_O3_mean'] = O3_2013_WAW_draft.mean(axis=1)
+
+air_WAW_2013 = [NO2_2013_WAW_draft['WAW_NO2_mean'], PM25_2013_WAW_draft['WAW_PM2.5_mean'], PM10_2013_WAW_draft['WAW_PM10_mean'], SO2_2013_WAW_draft['WAW_SO2_mean'], CO_2013_WAW_draft['WAW_CO_mean'], O3_2013_WAW_draft['WAW_O3_mean']]
+air_WAW_2013_final = pd.concat(air_WAW_2013, axis=1)
+air_WAW_2013_final = air_WAW_2013_final.drop(air_WAW_2013_final.index[-1])
+
+#Air 2014
+air_2014 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/302').read()
+data_2014 = ZipFile(io.BytesIO(air_2014))
+
+NO2_2014_WAW = pd.read_excel(data_2014.open('2014_NO2_1g.xlsx'))[2:].copy()
+NO2_2014_WAW = NO2_2014_WAW.rename(columns={"Kod stacji": "date"})
+NO2_2014_WAW['date'] = NO2_2014_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2014_WAW = NO2_2014_WAW[~NO2_2014_WAW['date'].str.contains(leap_year)]
+NO2_2014_WAW['date'] = pd.to_datetime(NO2_2014_WAW['date'])
+NO2_2014_WAW_draft = NO2_2014_WAW.groupby('date').mean()
+NO2_2014_WAW_draft = NO2_2014_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2014_WAW_draft['WAW_NO2_mean'] = NO2_2014_WAW_draft.mean(axis=1)
+
+PM25_2014_WAW = pd.read_excel(data_2014.open('2014_PM2.5_1g.xlsx'))[2:].copy()
+PM25_2014_WAW = PM25_2014_WAW.rename(columns={"Kod stacji": "date"})
+PM25_2014_WAW['date'] = PM25_2014_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2014_WAW = PM25_2014_WAW[~PM25_2014_WAW['date'].str.contains(leap_year)]
+PM25_2014_WAW['date'] = pd.to_datetime(PM25_2014_WAW['date'])
+PM25_2014_WAW_draft = PM25_2014_WAW.groupby('date').mean()
+PM25_2014_WAW_draft = PM25_2014_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2014_WAW_draft['WAW_PM2.5_mean'] = PM25_2014_WAW_draft.mean(axis=1)
+
+PM10_2014_WAW = pd.read_excel(data_2014.open('2014_PM10_1g.xlsx'))[2:].copy()
+PM10_2014_WAW = PM10_2014_WAW.rename(columns={"Kod stacji": "date"})
+PM10_2014_WAW['date'] = PM10_2014_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2014_WAW = PM10_2014_WAW[~PM10_2014_WAW['date'].str.contains(leap_year)]
+PM10_2014_WAW['date'] = pd.to_datetime(PM10_2014_WAW['date'])
+PM10_2014_WAW_draft = PM10_2014_WAW.groupby('date').mean()
+PM10_2014_WAW_draft = PM10_2014_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2014_WAW_draft['WAW_PM10_mean'] = PM10_2014_WAW_draft.mean(axis=1)
+
+SO2_2014_WAW = pd.read_excel(data_2014.open('2014_SO2_1g.xlsx'))[2:].copy()
+SO2_2014_WAW = SO2_2014_WAW.rename(columns={"Kod stacji": "date"})
+SO2_2014_WAW['date'] = SO2_2014_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2014_WAW['date'] = pd.to_datetime(SO2_2014_WAW['date'])
+SO2_2014_WAW_draft = SO2_2014_WAW.groupby('date').mean()
+SO2_2014_WAW_draft = SO2_2014_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2014_WAW_draft['WAW_SO2_mean'] = SO2_2014_WAW_draft.mean(axis=1)
+
+CO_2014_WAW = pd.read_excel(data_2014.open('2014_CO_1g.xlsx'))[2:].copy()
+CO_2014_WAW = CO_2014_WAW.rename(columns={"Kod stacji": "date"})
+CO_2014_WAW['date'] = CO_2014_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2014_WAW['date'] = pd.to_datetime(CO_2014_WAW['date'])
+CO_2014_WAW_draft = CO_2014_WAW.groupby('date').mean()
+CO_2014_WAW_draft = CO_2014_WAW_draft.filter(regex = warsaw_pattern)
+CO_2014_WAW_draft['WAW_CO_mean'] = CO_2014_WAW_draft.mean(axis=1)
+
+O3_2014_WAW = pd.read_excel(data_2014.open('2014_O3_1g.xlsx'))[2:].copy()
+O3_2014_WAW = O3_2014_WAW.rename(columns={"Kod stacji": "date"})
+O3_2014_WAW['date'] = O3_2014_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2014_WAW['date'] = pd.to_datetime(O3_2014_WAW['date'])
+O3_2014_WAW_draft = O3_2014_WAW.groupby('date').mean()
+O3_2014_WAW_draft = O3_2014_WAW_draft.filter(regex = warsaw_pattern)
+O3_2014_WAW_draft['WAW_O3_mean'] = O3_2014_WAW_draft.mean(axis=1)
+
+air_WAW_2014 = [NO2_2014_WAW_draft['WAW_NO2_mean'], PM25_2014_WAW_draft['WAW_PM2.5_mean'], PM10_2014_WAW_draft['WAW_PM10_mean'], SO2_2014_WAW_draft['WAW_SO2_mean'], CO_2014_WAW_draft['WAW_CO_mean'], O3_2014_WAW_draft['WAW_O3_mean']]
+air_WAW_2014_final = pd.concat(air_WAW_2014, axis=1)
+air_WAW_2014_final = air_WAW_2014_final.drop(air_WAW_2014_final.index[-1])
+
+#Air 2015
+air_2015 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/236').read()
+data_2015 = ZipFile(io.BytesIO(air_2015))
+
+NO2_2015_WAW = pd.read_excel(data_2015.open('2015_NO2_1g.xlsx'))[2:].copy()
+NO2_2015_WAW = NO2_2015_WAW.rename(columns={"Kod stacji": "date"})
+NO2_2015_WAW['date'] = NO2_2015_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2015_WAW = NO2_2015_WAW[~NO2_2015_WAW['date'].str.contains(leap_year)]
+NO2_2015_WAW['date'] = pd.to_datetime(NO2_2015_WAW['date'])
+NO2_2015_WAW_draft = NO2_2015_WAW.groupby('date').mean()
+NO2_2015_WAW_draft = NO2_2015_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2015_WAW_draft['WAW_NO2_mean'] = NO2_2015_WAW_draft.mean(axis=1)
+
+PM25_2015_WAW = pd.read_excel(data_2015.open('2015_PM25_1g.xlsx'))[2:].copy()
+PM25_2015_WAW = PM25_2015_WAW.rename(columns={"Kod stacji": "date"})
+PM25_2015_WAW['date'] = PM25_2015_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2015_WAW = PM25_2015_WAW[~PM25_2015_WAW['date'].str.contains(leap_year)]
+PM25_2015_WAW['date'] = pd.to_datetime(PM25_2015_WAW['date'])
+PM25_2015_WAW_draft = PM25_2015_WAW.groupby('date').mean()
+PM25_2015_WAW_draft = PM25_2015_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2015_WAW_draft['WAW_PM2.5_mean'] = PM25_2015_WAW_draft.mean(axis=1)
+
+PM10_2015_WAW = pd.read_excel(data_2015.open('2015_PM10_1g.xlsx'))[2:].copy()
+PM10_2015_WAW = PM10_2015_WAW.rename(columns={"Kod stacji": "date"})
+PM10_2015_WAW['date'] = PM10_2015_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2015_WAW['date'] = pd.to_datetime(PM10_2015_WAW['date'])
+PM10_2015_WAW_draft = PM10_2015_WAW.groupby('date').mean()
+PM10_2015_WAW_draft = PM10_2015_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2015_WAW_draft['WAW_PM10_mean'] = PM10_2015_WAW_draft.mean(axis=1)
+
+SO2_2015_WAW = pd.read_excel(data_2015.open('2015_SO2_1g.xlsx'))[2:].copy()
+SO2_2015_WAW = SO2_2015_WAW.rename(columns={"Kod stacji": "date"})
+SO2_2015_WAW['date'] = SO2_2015_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2015_WAW['date'] = pd.to_datetime(SO2_2015_WAW['date'])
+SO2_2015_WAW_draft = SO2_2015_WAW.groupby('date').mean()
+SO2_2015_WAW_draft = SO2_2015_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2015_WAW_draft['WAW_SO2_mean'] = SO2_2015_WAW_draft.mean(axis=1)
+
+CO_2015_WAW = pd.read_excel(data_2015.open('2015_CO_1g.xlsx'))[2:].copy()
+CO_2015_WAW = CO_2015_WAW.rename(columns={"Kod stacji": "date"})
+CO_2015_WAW['date'] = CO_2015_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2015_WAW['date'] = pd.to_datetime(CO_2015_WAW['date'])
+CO_2015_WAW_draft = CO_2015_WAW.groupby('date').mean()
+CO_2015_WAW_draft = CO_2015_WAW_draft.filter(regex = warsaw_pattern)
+CO_2015_WAW_draft['WAW_CO_mean'] = CO_2015_WAW_draft.mean(axis=1)
+
+O3_2015_WAW = pd.read_excel(data_2015.open('2015_O3_1g.xlsx'))[2:].copy()
+O3_2015_WAW = O3_2015_WAW.rename(columns={"Kod stacji": "date"})
+O3_2015_WAW['date'] = O3_2015_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2015_WAW['date'] = pd.to_datetime(O3_2015_WAW['date'])
+O3_2015_WAW_draft = O3_2015_WAW.groupby('date').mean()
+O3_2015_WAW_draft = O3_2015_WAW_draft.filter(regex = warsaw_pattern)
+O3_2015_WAW_draft['WAW_O3_mean'] = O3_2015_WAW_draft.mean(axis=1)
+
+air_WAW_2015 = [NO2_2015_WAW_draft['WAW_NO2_mean'], PM25_2015_WAW_draft['WAW_PM2.5_mean'], PM10_2015_WAW_draft['WAW_PM10_mean'], SO2_2015_WAW_draft['WAW_SO2_mean'], CO_2015_WAW_draft['WAW_CO_mean'], O3_2015_WAW_draft['WAW_O3_mean']]
+air_WAW_2015_final = pd.concat(air_WAW_2015, axis=1)
+air_WAW_2015_final = air_WAW_2015_final.drop(air_WAW_2015_final.index[-1])
+
+# Air 2016
+air_2016 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/242').read()
+data_2016 = ZipFile(io.BytesIO(air_2016))
+
+NO2_2016_WAW = pd.read_excel(data_2016.open('2016_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2016_WAW = NO2_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+NO2_2016_WAW = NO2_2016_WAW.replace(',', '.', regex=True)
+NO2_2016_WAW.loc[:, NO2_2016_WAW.columns != 'date'] = NO2_2016_WAW.loc[:, NO2_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2016_WAW['date'] = NO2_2016_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2016_WAW = NO2_2016_WAW[~NO2_2016_WAW['date'].str.contains(leap_year)]
+NO2_2016_WAW['date'] = pd.to_datetime(NO2_2016_WAW['date'])
+NO2_2016_WAW_draft = NO2_2016_WAW.groupby('date').mean(numeric_only=True)
+NO2_2016_WAW_draft = NO2_2016_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2016_WAW_draft['WAW_NO2_mean'] = NO2_2016_WAW_draft.mean(axis=1)
+
+PM25_2016_WAW = pd.read_excel(data_2016.open('2016_PM2.5_1g.xlsx'), skiprows=5).copy()
+PM25_2016_WAW = PM25_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+PM25_2016_WAW = PM25_2016_WAW.replace(',', '.', regex=True)
+PM25_2016_WAW.loc[:, PM25_2016_WAW.columns != 'date'] = PM25_2016_WAW.loc[:, PM25_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2016_WAW['date'] = PM25_2016_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2016_WAW = PM25_2016_WAW[~PM25_2016_WAW['date'].str.contains(leap_year)]
+PM25_2016_WAW['date'] = pd.to_datetime(PM25_2016_WAW['date'])
+PM25_2016_WAW_draft = PM25_2016_WAW.groupby('date').mean()
+PM25_2016_WAW_draft = PM25_2016_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2016_WAW_draft['WAW_PM2.5_mean'] = PM25_2016_WAW_draft.mean(axis=1)
+
+PM10_2016_WAW = pd.read_excel(data_2016.open('2016_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2016_WAW = PM10_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+PM10_2016_WAW = PM10_2016_WAW.replace(',', '.', regex=True)
+PM10_2016_WAW.loc[:, PM10_2016_WAW.columns != 'date'] = PM10_2016_WAW.loc[:, PM10_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2016_WAW['date'] = PM10_2016_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2016_WAW = PM10_2016_WAW[~PM10_2016_WAW['date'].str.contains(leap_year)]
+PM10_2016_WAW['date'] = pd.to_datetime(PM10_2016_WAW['date'])
+PM10_2016_WAW_draft = PM10_2016_WAW.groupby('date').mean()
+PM10_2016_WAW_draft = PM10_2016_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2016_WAW_draft['WAW_PM10_mean'] = PM10_2016_WAW_draft.mean(axis=1)
+
+SO2_2016_WAW = pd.read_excel(data_2016.open('2016_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2016_WAW = SO2_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+SO2_2016_WAW = SO2_2016_WAW.replace(',', '.', regex=True)
+SO2_2016_WAW.loc[:, SO2_2016_WAW.columns != 'date'] = SO2_2016_WAW.loc[:, SO2_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2016_WAW['date'] = SO2_2016_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2016_WAW = SO2_2016_WAW[~SO2_2016_WAW['date'].str.contains(leap_year)]
+SO2_2016_WAW['date'] = pd.to_datetime(SO2_2016_WAW['date'])
+SO2_2016_WAW_draft = SO2_2016_WAW.groupby('date').mean(numeric_only=True)
+SO2_2016_WAW_draft = SO2_2016_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2016_WAW_draft['WAW_SO2_mean'] = SO2_2016_WAW_draft.mean(axis=1)
+
+CO_2016_WAW = pd.read_excel(data_2016.open('2016_CO_1g.xlsx'), skiprows=5).copy()
+CO_2016_WAW = CO_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+CO_2016_WAW = CO_2016_WAW.replace(',', '.', regex=True)
+CO_2016_WAW.loc[:, CO_2016_WAW.columns != 'date'] = CO_2016_WAW.loc[:, CO_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2016_WAW['date'] = CO_2016_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2016_WAW = CO_2016_WAW[~CO_2016_WAW['date'].str.contains(leap_year)]
+CO_2016_WAW['date'] = pd.to_datetime(CO_2016_WAW['date'])
+CO_2016_WAW_draft = CO_2016_WAW.groupby('date').mean()
+CO_2016_WAW_draft = CO_2016_WAW_draft.filter(regex = warsaw_pattern)
+CO_2016_WAW_draft['WAW_CO_mean'] = CO_2016_WAW_draft.mean(axis=1)
+
+O3_2016_WAW = pd.read_excel(data_2016.open('2016_O3_1g.xlsx'), skiprows=5).copy()
+O3_2016_WAW = O3_2016_WAW.rename(columns={"Czas pomiaru": "date"})
+O3_2016_WAW = O3_2016_WAW.replace(',', '.', regex=True)
+O3_2016_WAW.loc[:, O3_2016_WAW.columns != 'date'] = O3_2016_WAW.loc[:, O3_2016_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2016_WAW['date'] = O3_2016_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2016_WAW = O3_2016_WAW[~O3_2016_WAW['date'].str.contains(leap_year)]
+O3_2016_WAW['date'] = pd.to_datetime(O3_2016_WAW['date'])
+O3_2016_WAW_draft = O3_2016_WAW.groupby('date').mean()
+O3_2016_WAW_draft = O3_2016_WAW_draft.filter(regex = warsaw_pattern)
+O3_2016_WAW_draft['WAW_O3_mean'] = O3_2016_WAW_draft.mean(axis=1)
+
+air_WAW_2016 = [NO2_2016_WAW_draft['WAW_NO2_mean'], PM25_2016_WAW_draft['WAW_PM2.5_mean'], PM10_2016_WAW_draft['WAW_PM10_mean'], SO2_2016_WAW_draft['WAW_SO2_mean'], CO_2016_WAW_draft['WAW_CO_mean'], O3_2016_WAW_draft['WAW_O3_mean']]
+air_WAW_2016_final = pd.concat(air_WAW_2016, axis=1)
+air_WAW_2016_final = air_WAW_2016_final.drop(air_WAW_2016_final.index[-1])
+
+# Air 2017
+air_2017 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/262').read()
+data_2017 = ZipFile(io.BytesIO(air_2017))
+
+NO2_2017_WAW = pd.read_excel(data_2017.open('2017_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2017_WAW = NO2_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+NO2_2017_WAW = NO2_2017_WAW.replace(',', '.', regex=True)
+NO2_2017_WAW.loc[:, NO2_2017_WAW.columns != 'date'] = NO2_2017_WAW.loc[:, NO2_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2017_WAW['date'] = NO2_2017_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2017_WAW = NO2_2017_WAW[~NO2_2017_WAW['date'].str.contains(leap_year)]
+NO2_2017_WAW['date'] = pd.to_datetime(NO2_2017_WAW['date'])
+NO2_2017_WAW_draft = NO2_2017_WAW.groupby('date').mean(numeric_only=True)
+NO2_2017_WAW_draft = NO2_2017_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2017_WAW_draft['WAW_NO2_mean'] = NO2_2017_WAW_draft.mean(axis=1)
+
+PM25_2017_WAW = pd.read_excel(data_2017.open('2017_PM25_1g.xlsx'), skiprows=5).copy()
+PM25_2017_WAW = PM25_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+PM25_2017_WAW = PM25_2017_WAW.replace(',', '.', regex=True)
+PM25_2017_WAW.loc[:, PM25_2017_WAW.columns != 'date'] = PM25_2017_WAW.loc[:, PM25_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2017_WAW['date'] = PM25_2017_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2017_WAW = PM25_2017_WAW[~PM25_2017_WAW['date'].str.contains(leap_year)]
+PM25_2017_WAW['date'] = pd.to_datetime(PM25_2017_WAW['date'])
+PM25_2017_WAW_draft = PM25_2017_WAW.groupby('date').mean()
+PM25_2017_WAW_draft = PM25_2017_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2017_WAW_draft['WAW_PM2.5_mean'] = PM25_2017_WAW_draft.mean(axis=1)
+
+PM10_2017_WAW = pd.read_excel(data_2017.open('2017_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2017_WAW = PM10_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+PM10_2017_WAW = PM10_2017_WAW.replace(',', '.', regex=True)
+PM10_2017_WAW.loc[:, PM10_2017_WAW.columns != 'date'] = PM10_2017_WAW.loc[:, PM10_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2017_WAW['date'] = PM10_2017_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2017_WAW['date'] = pd.to_datetime(PM10_2017_WAW['date'])
+PM10_2017_WAW_draft = PM10_2017_WAW.groupby('date').mean()
+PM10_2017_WAW_draft = PM10_2017_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2017_WAW_draft['WAW_PM10_mean'] = PM10_2017_WAW_draft.mean(axis=1)
+
+SO2_2017_WAW = pd.read_excel(data_2017.open('2017_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2017_WAW = SO2_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+SO2_2017_WAW = SO2_2017_WAW.replace(',', '.', regex=True)
+SO2_2017_WAW.loc[:, SO2_2017_WAW.columns != 'date'] = SO2_2017_WAW.loc[:, SO2_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2017_WAW['date'] = SO2_2017_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2017_WAW['date'] = pd.to_datetime(SO2_2017_WAW['date'])
+SO2_2017_WAW_draft = SO2_2017_WAW.groupby('date').mean(numeric_only=True)
+SO2_2017_WAW_draft = SO2_2017_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2017_WAW_draft['WAW_SO2_mean'] = SO2_2017_WAW_draft.mean(axis=1)
+
+CO_2017_WAW = pd.read_excel(data_2017.open('2017_CO_1g.xlsx'), skiprows=5).copy()
+CO_2017_WAW = CO_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+CO_2017_WAW = CO_2017_WAW.replace(',', '.', regex=True)
+CO_2017_WAW.loc[:, CO_2017_WAW.columns != 'date'] = CO_2017_WAW.loc[:, CO_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2017_WAW['date'] = CO_2017_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2017_WAW['date'] = pd.to_datetime(CO_2017_WAW['date'])
+CO_2017_WAW_draft = CO_2017_WAW.groupby('date').mean()
+CO_2017_WAW_draft = CO_2017_WAW_draft.filter(regex = warsaw_pattern)
+CO_2017_WAW_draft['WAW_CO_mean'] = CO_2017_WAW_draft.mean(axis=1)
+
+O3_2017_WAW = pd.read_excel(data_2017.open('2017_O3_1g.xlsx'), skiprows=5).copy()
+O3_2017_WAW = O3_2017_WAW.rename(columns={"Kod stanowiska": "date"})
+O3_2017_WAW = O3_2017_WAW.replace(',', '.', regex=True)
+O3_2017_WAW.loc[:, O3_2017_WAW.columns != 'date'] = O3_2017_WAW.loc[:, O3_2017_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2017_WAW['date'] = O3_2017_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2017_WAW['date'] = pd.to_datetime(O3_2017_WAW['date'])
+O3_2017_WAW_draft = O3_2017_WAW.groupby('date').mean()
+O3_2017_WAW_draft = O3_2017_WAW_draft.filter(regex = warsaw_pattern)
+O3_2017_WAW_draft['WAW_O3_mean'] = O3_2017_WAW_draft.mean(axis=1)
+
+air_WAW_2017 = [NO2_2017_WAW_draft['WAW_NO2_mean'], PM25_2017_WAW_draft['WAW_PM2.5_mean'], PM10_2017_WAW_draft['WAW_PM10_mean'], SO2_2017_WAW_draft['WAW_SO2_mean'], CO_2017_WAW_draft['WAW_CO_mean'], O3_2017_WAW_draft['WAW_O3_mean']]
+air_WAW_2017_final = pd.concat(air_WAW_2017, axis=1)
+air_WAW_2017_final = air_WAW_2017_final.drop(air_WAW_2017_final.index[-1])
+
+# Air 2018
+air_2018 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/303').read()
+data_2018 = ZipFile(io.BytesIO(air_2018))
+
+NO2_2018_WAW = pd.read_excel(data_2018.open('2018_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2018_WAW = NO2_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+NO2_2018_WAW = NO2_2018_WAW.replace(',', '.', regex=True)
+NO2_2018_WAW.loc[:, NO2_2018_WAW.columns != 'date'] = NO2_2018_WAW.loc[:, NO2_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2018_WAW['date'] = NO2_2018_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2018_WAW = NO2_2018_WAW[~NO2_2018_WAW['date'].str.contains(leap_year)]
+NO2_2018_WAW['date'] = pd.to_datetime(NO2_2018_WAW['date'])
+NO2_2018_WAW_draft = NO2_2018_WAW.groupby('date').mean(numeric_only=True)
+NO2_2018_WAW_draft = NO2_2018_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2018_WAW_draft['WAW_NO2_mean'] = NO2_2018_WAW_draft.mean(axis=1)
+
+PM25_2018_WAW = pd.read_excel(data_2018.open('2018_PM25_1g.xlsx'), skiprows=5).copy()
+PM25_2018_WAW = PM25_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+PM25_2018_WAW = PM25_2018_WAW.replace(',', '.', regex=True)
+PM25_2018_WAW.loc[:, PM25_2018_WAW.columns != 'date'] = PM25_2018_WAW.loc[:, PM25_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2018_WAW['date'] = PM25_2018_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2018_WAW = PM25_2018_WAW[~PM25_2018_WAW['date'].str.contains(leap_year)]
+PM25_2018_WAW['date'] = pd.to_datetime(PM25_2018_WAW['date'])
+PM25_2018_WAW_draft = PM25_2018_WAW.groupby('date').mean()
+PM25_2018_WAW_draft = PM25_2018_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2018_WAW_draft['WAW_PM2.5_mean'] = PM25_2018_WAW_draft.mean(axis=1)
+
+PM10_2018_WAW = pd.read_excel(data_2018.open('2018_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2018_WAW = PM10_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+PM10_2018_WAW = PM10_2018_WAW.replace(',', '.', regex=True)
+PM10_2018_WAW.loc[:, PM10_2018_WAW.columns != 'date'] = PM10_2018_WAW.loc[:, PM10_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2018_WAW['date'] = PM10_2018_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2018_WAW['date'] = pd.to_datetime(PM10_2018_WAW['date'])
+PM10_2018_WAW_draft = PM10_2018_WAW.groupby('date').mean()
+PM10_2018_WAW_draft = PM10_2018_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2018_WAW_draft['WAW_PM10_mean'] = PM10_2018_WAW_draft.mean(axis=1)
+
+SO2_2018_WAW = pd.read_excel(data_2018.open('2018_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2018_WAW = SO2_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+SO2_2018_WAW = SO2_2018_WAW.replace(',', '.', regex=True)
+SO2_2018_WAW.loc[:, SO2_2018_WAW.columns != 'date'] = SO2_2018_WAW.loc[:, SO2_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2018_WAW['date'] = SO2_2018_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2018_WAW['date'] = pd.to_datetime(SO2_2018_WAW['date'])
+SO2_2018_WAW_draft = SO2_2018_WAW.groupby('date').mean(numeric_only=True)
+SO2_2018_WAW_draft = SO2_2018_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2018_WAW_draft['WAW_SO2_mean'] = SO2_2018_WAW_draft.mean(axis=1)
+
+CO_2018_WAW = pd.read_excel(data_2018.open('2018_CO_1g.xlsx'), skiprows=5).copy()
+CO_2018_WAW = CO_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+CO_2018_WAW = CO_2018_WAW.replace(',', '.', regex=True)
+CO_2018_WAW.loc[:, CO_2018_WAW.columns != 'date'] = CO_2018_WAW.loc[:, CO_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2018_WAW['date'] = CO_2018_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2018_WAW['date'] = pd.to_datetime(CO_2018_WAW['date'])
+CO_2018_WAW_draft = CO_2018_WAW.groupby('date').mean()
+CO_2018_WAW_draft = CO_2018_WAW_draft.filter(regex = warsaw_pattern)
+CO_2018_WAW_draft['WAW_CO_mean'] = CO_2018_WAW_draft.mean(axis=1)
+
+O3_2018_WAW = pd.read_excel(data_2018.open('2018_O3_1g.xlsx'), skiprows=5).copy()
+O3_2018_WAW = O3_2018_WAW.rename(columns={"Czas pomiaru": "date"})
+O3_2018_WAW = O3_2018_WAW.replace(',', '.', regex=True)
+O3_2018_WAW.loc[:, O3_2018_WAW.columns != 'date'] = O3_2018_WAW.loc[:, O3_2018_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2018_WAW['date'] = O3_2018_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2018_WAW['date'] = pd.to_datetime(O3_2018_WAW['date'])
+O3_2018_WAW_draft = O3_2018_WAW.groupby('date').mean()
+O3_2018_WAW_draft = O3_2018_WAW_draft.filter(regex = warsaw_pattern)
+O3_2018_WAW_draft['WAW_O3_mean'] = O3_2018_WAW_draft.mean(axis=1)
+
+air_WAW_2018 = [NO2_2018_WAW_draft['WAW_NO2_mean'], PM25_2018_WAW_draft['WAW_PM2.5_mean'], PM10_2018_WAW_draft['WAW_PM10_mean'], SO2_2018_WAW_draft['WAW_SO2_mean'], CO_2018_WAW_draft['WAW_CO_mean'], O3_2018_WAW_draft['WAW_O3_mean']]
+air_WAW_2018_final = pd.concat(air_WAW_2018, axis=1)
+air_WAW_2018_final = air_WAW_2018_final.drop(air_WAW_2018_final.index[-1])
+
+# Air 2019
+air_2019 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/322').read()
+data_2019 = ZipFile(io.BytesIO(air_2019))
+
+NO2_2019_WAW = pd.read_excel(data_2019.open('2019_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2019_WAW = NO2_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+NO2_2019_WAW = NO2_2019_WAW.replace(',', '.', regex=True)
+NO2_2019_WAW.loc[:, NO2_2019_WAW.columns != 'date'] = NO2_2019_WAW.loc[:, NO2_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2019_WAW['date'] = NO2_2019_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2019_WAW = NO2_2019_WAW[~NO2_2019_WAW['date'].str.contains(leap_year)]
+NO2_2019_WAW['date'] = pd.to_datetime(NO2_2019_WAW['date'])
+NO2_2019_WAW_draft = NO2_2019_WAW.groupby('date').mean(numeric_only=True)
+NO2_2019_WAW_draft = NO2_2019_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2019_WAW_draft['WAW_NO2_mean'] = NO2_2019_WAW_draft.mean(axis=1)
+
+PM25_2019_WAW = pd.read_excel(data_2019.open('2019_PM25_1g.xlsx'), skiprows=5).copy()
+PM25_2019_WAW = PM25_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+PM25_2019_WAW = PM25_2019_WAW.replace(',', '.', regex=True)
+PM25_2019_WAW.loc[:, PM25_2019_WAW.columns != 'date'] = PM25_2019_WAW.loc[:, PM25_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2019_WAW['date'] = PM25_2019_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2019_WAW = PM25_2019_WAW[~PM25_2019_WAW['date'].str.contains(leap_year)]
+PM25_2019_WAW['date'] = pd.to_datetime(PM25_2019_WAW['date'])
+PM25_2019_WAW_draft = PM25_2019_WAW.groupby('date').mean()
+PM25_2019_WAW_draft = PM25_2019_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2019_WAW_draft['WAW_PM2.5_mean'] = PM25_2019_WAW_draft.mean(axis=1)
+
+PM10_2019_WAW = pd.read_excel(data_2019.open('2019_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2019_WAW = PM10_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+PM10_2019_WAW = PM10_2019_WAW.replace(',', '.', regex=True)
+PM10_2019_WAW.loc[:, PM10_2019_WAW.columns != 'date'] = PM10_2019_WAW.loc[:, PM10_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2019_WAW['date'] = PM10_2019_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2019_WAW['date'] = pd.to_datetime(PM10_2019_WAW['date'])
+PM10_2019_WAW_draft = PM10_2019_WAW.groupby('date').mean()
+PM10_2019_WAW_draft = PM10_2019_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2019_WAW_draft['WAW_PM10_mean'] = PM10_2019_WAW_draft.mean(axis=1)
+
+SO2_2019_WAW = pd.read_excel(data_2019.open('2019_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2019_WAW = SO2_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+SO2_2019_WAW = SO2_2019_WAW.replace(',', '.', regex=True)
+SO2_2019_WAW.loc[:, SO2_2019_WAW.columns != 'date'] = SO2_2019_WAW.loc[:, SO2_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2019_WAW['date'] = SO2_2019_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2019_WAW['date'] = pd.to_datetime(SO2_2019_WAW['date'])
+SO2_2019_WAW_draft = SO2_2019_WAW.groupby('date').mean(numeric_only=True)
+SO2_2019_WAW_draft = SO2_2019_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2019_WAW_draft['WAW_SO2_mean'] = SO2_2019_WAW_draft.mean(axis=1)
+
+CO_2019_WAW = pd.read_excel(data_2019.open('2019_CO_1g.xlsx'), skiprows=5).copy()
+CO_2019_WAW = CO_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+CO_2019_WAW = CO_2019_WAW.replace(',', '.', regex=True)
+CO_2019_WAW.loc[:, CO_2019_WAW.columns != 'date'] = CO_2019_WAW.loc[:, CO_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2019_WAW['date'] = CO_2019_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2019_WAW['date'] = pd.to_datetime(CO_2019_WAW['date'])
+CO_2019_WAW_draft = CO_2019_WAW.groupby('date').mean()
+CO_2019_WAW_draft = CO_2019_WAW_draft.filter(regex = warsaw_pattern)
+CO_2019_WAW_draft['WAW_CO_mean'] = CO_2019_WAW_draft.mean(axis=1)
+
+O3_2019_WAW = pd.read_excel(data_2019.open('2019_O3_1g.xlsx'), skiprows=5).copy()
+O3_2019_WAW = O3_2019_WAW.rename(columns={"Kod stanowiska": "date"})
+O3_2019_WAW = O3_2019_WAW.replace(',', '.', regex=True)
+O3_2019_WAW.loc[:, O3_2019_WAW.columns != 'date'] = O3_2019_WAW.loc[:, O3_2019_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2019_WAW['date'] = O3_2019_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2019_WAW['date'] = pd.to_datetime(O3_2019_WAW['date'])
+O3_2019_WAW_draft = O3_2019_WAW.groupby('date').mean()
+O3_2019_WAW_draft = O3_2019_WAW_draft.filter(regex = warsaw_pattern)
+O3_2019_WAW_draft['WAW_O3_mean'] = O3_2019_WAW_draft.mean(axis=1)
+
+air_WAW_2019 = [NO2_2019_WAW_draft['WAW_NO2_mean'], PM25_2019_WAW_draft['WAW_PM2.5_mean'], PM10_2019_WAW_draft['WAW_PM10_mean'], SO2_2019_WAW_draft['WAW_SO2_mean'], CO_2019_WAW_draft['WAW_CO_mean'], O3_2019_WAW_draft['WAW_O3_mean']]
+air_WAW_2019_final = pd.concat(air_WAW_2019, axis=1)
+air_WAW_2019_final = air_WAW_2019_final.drop(air_WAW_2019_final.index[-1])
+
+# Air 2020
+air_2020 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/424').read()
+data_2020 = ZipFile(io.BytesIO(air_2020))
+
+NO2_2020_WAW = pd.read_excel(data_2020.open('2020_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2020_WAW = NO2_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+NO2_2020_WAW = NO2_2020_WAW.replace(',', '.', regex=True)
+NO2_2020_WAW.loc[:, NO2_2020_WAW.columns != 'date'] = NO2_2020_WAW.loc[:, NO2_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2020_WAW['date'] = NO2_2020_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2020_WAW = NO2_2020_WAW[~NO2_2020_WAW['date'].str.contains(leap_year)]
+NO2_2020_WAW['date'] = pd.to_datetime(NO2_2020_WAW['date'])
+NO2_2020_WAW_draft = NO2_2020_WAW.groupby('date').mean(numeric_only=True)
+NO2_2020_WAW_draft = NO2_2020_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2020_WAW_draft['WAW_NO2_mean'] = NO2_2020_WAW_draft.mean(axis=1)
+
+PM25_2020_WAW = pd.read_excel(data_2020.open('2020_PM25_1g.xlsx'), skiprows=5).copy()
+PM25_2020_WAW = PM25_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+PM25_2020_WAW = PM25_2020_WAW.replace(',', '.', regex=True)
+PM25_2020_WAW.loc[:, PM25_2020_WAW.columns != 'date'] = PM25_2020_WAW.loc[:, PM25_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2020_WAW['date'] = PM25_2020_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2020_WAW = PM25_2020_WAW[~PM25_2020_WAW['date'].str.contains(leap_year)]
+PM25_2020_WAW['date'] = pd.to_datetime(PM25_2020_WAW['date'])
+PM25_2020_WAW_draft = PM25_2020_WAW.groupby('date').mean()
+PM25_2020_WAW_draft = PM25_2020_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2020_WAW_draft['WAW_PM2.5_mean'] = PM25_2020_WAW_draft.mean(axis=1)
+
+PM10_2020_WAW = pd.read_excel(data_2020.open('2020_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2020_WAW = PM10_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+PM10_2020_WAW = PM10_2020_WAW.replace(',', '.', regex=True)
+PM10_2020_WAW.loc[:, PM10_2020_WAW.columns != 'date'] = PM10_2020_WAW.loc[:, PM10_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2020_WAW['date'] = PM10_2020_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2020_WAW = PM10_2020_WAW[~PM10_2020_WAW['date'].str.contains(leap_year)]
+PM10_2020_WAW['date'] = pd.to_datetime(PM10_2020_WAW['date'])
+PM10_2020_WAW_draft = PM10_2020_WAW.groupby('date').mean()
+PM10_2020_WAW_draft = PM10_2020_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2020_WAW_draft['WAW_PM10_mean'] = PM10_2020_WAW_draft.mean(axis=1)
+
+SO2_2020_WAW = pd.read_excel(data_2020.open('2020_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2020_WAW = SO2_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+SO2_2020_WAW = SO2_2020_WAW.replace(',', '.', regex=True)
+SO2_2020_WAW.loc[:, SO2_2020_WAW.columns != 'date'] = SO2_2020_WAW.loc[:, SO2_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2020_WAW['date'] = SO2_2020_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2020_WAW = SO2_2020_WAW[~SO2_2020_WAW['date'].str.contains(leap_year)]
+SO2_2020_WAW['date'] = pd.to_datetime(SO2_2020_WAW['date'])
+SO2_2020_WAW_draft = SO2_2020_WAW.groupby('date').mean(numeric_only=True)
+SO2_2020_WAW_draft = SO2_2020_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2020_WAW_draft['WAW_SO2_mean'] = SO2_2020_WAW_draft.mean(axis=1)
+
+CO_2020_WAW = pd.read_excel(data_2020.open('2020_CO_1g.xlsx'), skiprows=5).copy()
+CO_2020_WAW = CO_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+CO_2020_WAW = CO_2020_WAW.replace(',', '.', regex=True)
+CO_2020_WAW.loc[:, CO_2020_WAW.columns != 'date'] = CO_2020_WAW.loc[:, CO_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2020_WAW['date'] = CO_2020_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2020_WAW = CO_2020_WAW[~CO_2020_WAW['date'].str.contains(leap_year)]
+CO_2020_WAW['date'] = pd.to_datetime(CO_2020_WAW['date'])
+CO_2020_WAW_draft = CO_2020_WAW.groupby('date').mean()
+CO_2020_WAW_draft = CO_2020_WAW_draft.filter(regex = warsaw_pattern)
+CO_2020_WAW_draft['WAW_CO_mean'] = CO_2020_WAW_draft.mean(axis=1)
+
+O3_2020_WAW = pd.read_excel(data_2020.open('2020_O3_1g.xlsx'), skiprows=5).copy()
+O3_2020_WAW = O3_2020_WAW.rename(columns={"Kod stanowiska": "date"})
+O3_2020_WAW = O3_2020_WAW.replace(',', '.', regex=True)
+O3_2020_WAW.loc[:, O3_2020_WAW.columns != 'date'] = O3_2020_WAW.loc[:, O3_2020_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2020_WAW['date'] = O3_2020_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2020_WAW = O3_2020_WAW[~O3_2020_WAW['date'].str.contains(leap_year)]
+O3_2020_WAW['date'] = pd.to_datetime(O3_2020_WAW['date'])
+O3_2020_WAW_draft = O3_2020_WAW.groupby('date').mean()
+O3_2020_WAW_draft = O3_2020_WAW_draft.filter(regex = warsaw_pattern)
+O3_2020_WAW_draft['WAW_O3_mean'] = O3_2020_WAW_draft.mean(axis=1)
+
+air_WAW_2020 = [NO2_2020_WAW_draft['WAW_NO2_mean'], PM25_2020_WAW_draft['WAW_PM2.5_mean'], PM10_2020_WAW_draft['WAW_PM10_mean'], SO2_2020_WAW_draft['WAW_SO2_mean'], CO_2020_WAW_draft['WAW_CO_mean'], O3_2020_WAW_draft['WAW_O3_mean']]
+air_WAW_2020_final = pd.concat(air_WAW_2020, axis=1)
+air_WAW_2020_final = air_WAW_2020_final.drop(air_WAW_2020_final.index[-1])
+
+# Air 2021
+air_2021 = urlopen('https://powietrze.gios.gov.pl/pjp/archives/downloadFile/486').read()
+data_2021 = ZipFile(io.BytesIO(air_2021))
+
+NO2_2021_WAW = pd.read_excel(data_2021.open('2021_NO2_1g.xlsx'), skiprows=5).copy()
+NO2_2021_WAW = NO2_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+NO2_2021_WAW = NO2_2021_WAW.replace(',', '.', regex=True)
+NO2_2021_WAW.loc[:, NO2_2021_WAW.columns != 'date'] = NO2_2021_WAW.loc[:, NO2_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+NO2_2021_WAW['date'] = NO2_2021_WAW['date'].astype(str).str.extract(date_pattern)
+NO2_2021_WAW = NO2_2021_WAW[~NO2_2021_WAW['date'].str.contains(leap_year)]
+NO2_2021_WAW['date'] = pd.to_datetime(NO2_2021_WAW['date'])
+NO2_2021_WAW_draft = NO2_2021_WAW.groupby('date').mean(numeric_only=True)
+NO2_2021_WAW_draft = NO2_2021_WAW_draft.filter(regex = warsaw_pattern)
+NO2_2021_WAW_draft['WAW_NO2_mean'] = NO2_2021_WAW_draft.mean(axis=1)
+
+PM25_2021_WAW = pd.read_excel(data_2021.open('2021_PM25_1g.xlsx'), skiprows=5).copy()
+PM25_2021_WAW = PM25_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+PM25_2021_WAW = PM25_2021_WAW.replace(',', '.', regex=True)
+PM25_2021_WAW.loc[:, PM25_2021_WAW.columns != 'date'] = PM25_2021_WAW.loc[:, PM25_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+PM25_2021_WAW['date'] = PM25_2021_WAW['date'].astype(str).str.extract(date_pattern)
+PM25_2021_WAW = PM25_2021_WAW[~PM25_2021_WAW['date'].str.contains(leap_year)]
+PM25_2021_WAW['date'] = pd.to_datetime(PM25_2021_WAW['date'])
+PM25_2021_WAW_draft = PM25_2021_WAW.groupby('date').mean()
+PM25_2021_WAW_draft = PM25_2021_WAW_draft.filter(regex = warsaw_pattern)
+PM25_2021_WAW_draft['WAW_PM2.5_mean'] = PM25_2021_WAW_draft.mean(axis=1)
+
+PM10_2021_WAW = pd.read_excel(data_2021.open('2021_PM10_1g.xlsx'), skiprows=5).copy()
+PM10_2021_WAW = PM10_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+PM10_2021_WAW = PM10_2021_WAW.replace(',', '.', regex=True)
+PM10_2021_WAW.loc[:, PM10_2021_WAW.columns != 'date'] = PM10_2021_WAW.loc[:, PM10_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+PM10_2021_WAW['date'] = PM10_2021_WAW['date'].astype(str).str.extract(date_pattern)
+PM10_2021_WAW['date'] = pd.to_datetime(PM10_2021_WAW['date'])
+PM10_2021_WAW_draft = PM10_2021_WAW.groupby('date').mean()
+PM10_2021_WAW_draft = PM10_2021_WAW_draft.filter(regex = warsaw_pattern)
+PM10_2021_WAW_draft['WAW_PM10_mean'] = PM10_2021_WAW_draft.mean(axis=1)
+
+SO2_2021_WAW = pd.read_excel(data_2021.open('2021_SO2_1g.xlsx'), skiprows=5).copy()
+SO2_2021_WAW = SO2_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+SO2_2021_WAW = SO2_2021_WAW.replace(',', '.', regex=True)
+SO2_2021_WAW.loc[:, SO2_2021_WAW.columns != 'date'] = SO2_2021_WAW.loc[:, SO2_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+SO2_2021_WAW['date'] = SO2_2021_WAW['date'].astype(str).str.extract(date_pattern)
+SO2_2021_WAW['date'] = pd.to_datetime(SO2_2021_WAW['date'])
+SO2_2021_WAW_draft = SO2_2021_WAW.groupby('date').mean(numeric_only=True)
+SO2_2021_WAW_draft = SO2_2021_WAW_draft.filter(regex = warsaw_pattern)
+SO2_2021_WAW_draft['WAW_SO2_mean'] = SO2_2021_WAW_draft.mean(axis=1)
+
+CO_2021_WAW = pd.read_excel(data_2021.open('2021_CO_1g.xlsx'), skiprows=5).copy()
+CO_2021_WAW = CO_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+CO_2021_WAW = CO_2021_WAW.replace(',', '.', regex=True)
+CO_2021_WAW.loc[:, CO_2021_WAW.columns != 'date'] = CO_2021_WAW.loc[:, CO_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+CO_2021_WAW['date'] = CO_2021_WAW['date'].astype(str).str.extract(date_pattern)
+CO_2021_WAW['date'] = pd.to_datetime(CO_2021_WAW['date'])
+CO_2021_WAW_draft = CO_2021_WAW.groupby('date').mean()
+CO_2021_WAW_draft = CO_2021_WAW_draft.filter(regex = warsaw_pattern)
+CO_2021_WAW_draft['WAW_CO_mean'] = CO_2021_WAW_draft.mean(axis=1)
+
+O3_2021_WAW = pd.read_excel(data_2021.open('2021_O3_1g.xlsx'), skiprows=5).copy()
+O3_2021_WAW = O3_2021_WAW.rename(columns={"Kod stanowiska": "date"})
+O3_2021_WAW = O3_2021_WAW.replace(',', '.', regex=True)
+O3_2021_WAW.loc[:, O3_2021_WAW.columns != 'date'] = O3_2021_WAW.loc[:, O3_2021_WAW.columns != 'date'].apply(pd.to_numeric)
+O3_2021_WAW['date'] = O3_2021_WAW['date'].astype(str).str.extract(date_pattern)
+O3_2021_WAW['date'] = pd.to_datetime(O3_2021_WAW['date'])
+O3_2021_WAW_draft = O3_2021_WAW.groupby('date').mean()
+O3_2021_WAW_draft = O3_2021_WAW_draft.filter(regex = warsaw_pattern)
+O3_2021_WAW_draft['WAW_O3_mean'] = O3_2021_WAW_draft.mean(axis=1)
+
+air_WAW_2021 = [NO2_2021_WAW_draft['WAW_NO2_mean'], PM25_2021_WAW_draft['WAW_PM2.5_mean'], PM10_2021_WAW_draft['WAW_PM10_mean'], SO2_2021_WAW_draft['WAW_SO2_mean'], CO_2021_WAW_draft['WAW_CO_mean'], O3_2021_WAW_draft['WAW_O3_mean']]
+air_WAW_2021_final = pd.concat(air_WAW_2021, axis=1)
+air_WAW_2021_final = air_WAW_2021_final.drop(air_WAW_2021_final.index[-1])
+
+air_WAW_combined = [air_WAW_2012_final, air_WAW_2013_final, air_WAW_2014_final, air_WAW_2015_final, air_WAW_2016_final, air_WAW_2017_final, air_WAW_2018_final, air_WAW_2019_final, air_WAW_2020_final, air_WAW_2021_final]
+air_WAW_final = pd.concat(air_WAW_combined).drop_duplicates()
+
+air_NO2_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_NO2_mean_2012 [\u03bcg/m3]', 'WAW_NO2_mean_2013 [\u03bcg/m3]', 'WAW_NO2_mean_2014 [\u03bcg/m3]', 'WAW_NO2_mean_2015 [\u03bcg/m3]',
+                                                                  'WAW_NO2_mean_2016 [\u03bcg/m3]', 'WAW_NO2_mean_2017 [\u03bcg/m3]', 'WAW_NO2_mean_2018 [\u03bcg/m3]', 'WAW_NO2_mean_2019 [\u03bcg/m3]', 'NO2_mean_2012_2019 [\u03bcg/m3]'))
+
+air_NO2_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_NO2_mean_2020 [\u03bcg/m3]', 'WAW_NO2_mean_2021 [\u03bcg/m3]', 'NO2_mean_2020_2021 [\u03bcg/m3]'))
+
+air_PM25_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_PM2.5_mean_2012 [\u03bcg/m3]', 'WAW_PM2.5_mean_2013 [\u03bcg/m3]', 'WAW_PM2.5_mean_2014 [\u03bcg/m3]', 'WAW_PM2.5_mean_2015 [\u03bcg/m3]', 'WAW_PM2.5_mean_2015 [\u03bcg/m3]',
+                                                                  'WAW_PM2.5_mean_2017 [\u03bcg/m3]', 'WAW_PM2.5_mean_2018 [\u03bcg/m3]', 'WAW_PM2.5_mean_2019 [\u03bcg/m3]', 'PM2.5_mean_2012_2019 [\u03bcg/m3]'))
+
+air_PM25_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_PM2.5_mean_2020 [\u03bcg/m3]', 'WAW_PM2.5_mean_2021 [\u03bcg/m3]', 'PM2.5_mean_2020_2021 [\u03bcg/m3]'))
+
+air_PM10_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_PM10_mean_2012 [\u03bcg/m3]', 'WAW_PM10_mean_2013 [\u03bcg/m3]', 'WAW_PM10_mean_2014 [\u03bcg/m3]', 'WAW_PM10_mean_2015 [\u03bcg/m3]', 'WAW_PM10_mean_2016 [\u03bcg/m3]',
+                                                                  'WAW_PM10_mean_2017 [\u03bcg/m3]', 'WAW_PM10_mean_2018 [\u03bcg/m3]', 'WAW_PM10_mean_2019 [\u03bcg/m3]', 'PM10_mean_2012_2019 [\u03bcg/m3]'))
+
+air_PM10_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_PM10_mean_2020 [\u03bcg/m3]', 'WAW_PM10_mean_2021 [\u03bcg/m3]', 'PM10_mean_2020_2021 [\u03bcg/m3]'))
+
+air_SO2_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_SO2_mean_2012 [\u03bcg/m3]', 'WAW_SO2_mean_2013 [\u03bcg/m3]', 'WAW_SO2_mean_2014 [\u03bcg/m3]', 'WAW_SO2_mean_2015 [\u03bcg/m3]', 'WAW_SO2_mean_2016 [\u03bcg/m3]',
+                                                                  'WAW_SO2_mean_2017 [\u03bcg/m3]', 'WAW_SO2_mean_2018 [\u03bcg/m3]', 'WAW_SO2_mean_2019 [\u03bcg/m3]', 'SO2_mean_2012_2019 [\u03bcg/m3]'))
+
+air_SO2_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_SO2_mean_2020 [\u03bcg/m3]', 'WAW_SO2_mean_2021 [\u03bcg/m3]', 'SO2_mean_2020_2021 [\u03bcg/m3]'))
+
+air_CO_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_CO_mean_2012 [mg/m3]', 'WAW_CO_mean_2013 [mg/m3]', 'WAW_CO_mean_2014 [mg/m3]', 'WAW_CO_mean_2015 [mg/m3]', 'WAW_CO_mean_2016 [mg/m3]',
+                                                                  'WAW_CO_mean_2017 [mg/m3]', 'WAW_CO_mean_2018 [mg/m3]', 'WAW_CO_mean_2019 [mg/m3]', 'CO_mean_2012_2019 [mg/m3]'))
+
+air_CO_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_CO_mean_2020 [mg/m3]', 'WAW_CO_mean_2021 [mg/m3]', 'CO_mean_2020_2021 [mg/m3]'))
+
+air_O3_1_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D',
+                                                                  'WAW_O3_mean_2012 [\u03bcg/m3]', 'WAW_O3_mean_2013 [\u03bcg/m3]', 'WAW_O3_mean_2014 [\u03bcg/m3]', 'WAW_O3_mean_2015 [\u03bcg/m3]', 'WAW_O3_mean_2016 [\u03bcg/m3]',
+                                                                  'WAW_O3_mean_2017 [\u03bcg/m3]', 'WAW_O3_mean_2018 [\u03bcg/m3]', 'WAW_O3_mean_2019 [\u03bcg/m3]', 'O3_mean_2012_2019 [\u03bcg/m3]'))
+
+air_O3_2_combined = pd.DataFrame(index=air_WAW_2012_final.index, columns=('date', 'date_M_D', 'WAW_O3_mean_2020 [\u03bcg/m3]', 'WAW_O3_mean_2021 [\u03bcg/m3]', 'O3_mean_2020_2021 [\u03bcg/m3]'))
+
+air_NO2_1_combined['WAW_NO2_mean_2012 [\u03bcg/m3]'] = air_WAW_2012_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2013 [\u03bcg/m3]'] = air_WAW_2013_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2014 [\u03bcg/m3]'] = air_WAW_2014_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2015 [\u03bcg/m3]'] = air_WAW_2015_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2016 [\u03bcg/m3]'] = air_WAW_2016_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2017 [\u03bcg/m3]'] = air_WAW_2017_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2018 [\u03bcg/m3]'] = air_WAW_2018_final['WAW_NO2_mean'].values
+air_NO2_1_combined['WAW_NO2_mean_2019 [\u03bcg/m3]'] = air_WAW_2019_final['WAW_NO2_mean'].values
+
+air_NO2_2_combined['WAW_NO2_mean_2020 [\u03bcg/m3]'] = air_WAW_2020_final['WAW_NO2_mean'].values
+air_NO2_2_combined['WAW_NO2_mean_2021 [\u03bcg/m3]'] = air_WAW_2021_final['WAW_NO2_mean'].values
+
+air_NO2_1_combined['NO2_mean_2012_2019 [\u03bcg/m3]'] = air_NO2_1_combined.mean(axis='columns')
+air_NO2_2_combined['NO2_mean_2020_2021 [\u03bcg/m3]'] = air_NO2_2_combined.mean(axis='columns')
+
+air_NO2_1_combined['date'] = air_WAW_2012_final['WAW_NO2_mean'].index
+air_NO2_1_combined['date_M_D'] = air_NO2_1_combined['date'].dt.strftime('%m-%d')
+
+air_NO2_2_combined['date'] = air_WAW_2020_final['WAW_NO2_mean'].index
+air_NO2_2_combined['date_M_D'] = air_NO2_2_combined['date'].dt.strftime('%m-%d')
+
+air_PM25_1_combined['WAW_PM2.5_mean_2012 [\u03bcg/m3]'] = air_WAW_2012_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2013 [\u03bcg/m3]'] = air_WAW_2013_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2014 [\u03bcg/m3]'] = air_WAW_2014_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2015 [\u03bcg/m3]'] = air_WAW_2015_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2015 [\u03bcg/m3]'] = air_WAW_2016_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2017 [\u03bcg/m3]'] = air_WAW_2017_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2018 [\u03bcg/m3]'] = air_WAW_2018_final['WAW_PM2.5_mean'].values
+air_PM25_1_combined['WAW_PM2.5_mean_2019 [\u03bcg/m3]'] = air_WAW_2019_final['WAW_PM2.5_mean'].values
+
+air_PM25_2_combined['WAW_PM2.5_mean_2020 [\u03bcg/m3]'] = air_WAW_2020_final['WAW_PM2.5_mean'].values
+air_PM25_2_combined['WAW_PM2.5_mean_2021 [\u03bcg/m3]'] = air_WAW_2021_final['WAW_PM2.5_mean'].values
+
+air_PM25_1_combined['PM2.5_mean_2012_2019 [\u03bcg/m3]'] = air_PM25_1_combined.mean(axis='columns')
+air_PM25_2_combined['PM2.5_mean_2020_2021 [\u03bcg/m3]'] = air_PM25_2_combined.mean(axis='columns')
+
+air_PM25_1_combined['date'] = air_WAW_2012_final['WAW_PM2.5_mean'].index
+air_PM25_1_combined['date_M_D'] = air_PM25_1_combined['date'].dt.strftime('%m-%d')
+
+air_PM25_2_combined['date'] = air_WAW_2020_final['WAW_PM2.5_mean'].index
+air_PM25_2_combined['date_M_D'] = air_PM25_2_combined['date'].dt.strftime('%m-%d')
+
+air_PM10_1_combined['WAW_PM10_mean_2012 [\u03bcg/m3]'] = air_WAW_2012_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2013 [\u03bcg/m3]'] = air_WAW_2013_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2014 [\u03bcg/m3]'] = air_WAW_2014_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2015 [\u03bcg/m3]'] = air_WAW_2015_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2016 [\u03bcg/m3]'] = air_WAW_2016_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2017 [\u03bcg/m3]'] = air_WAW_2017_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2018 [\u03bcg/m3]'] = air_WAW_2018_final['WAW_PM10_mean'].values
+air_PM10_1_combined['WAW_PM10_mean_2019 [\u03bcg/m3]'] = air_WAW_2019_final['WAW_PM10_mean'].values
+
+air_PM10_2_combined['WAW_PM10_mean_2020 [\u03bcg/m3]'] = air_WAW_2020_final['WAW_PM10_mean'].values
+air_PM10_2_combined['WAW_PM10_mean_2021 [\u03bcg/m3]'] = air_WAW_2021_final['WAW_PM10_mean'].values
+
+air_PM10_1_combined['PM10_mean_2012_2019 [\u03bcg/m3]'] = air_PM10_1_combined.mean(axis='columns')
+air_PM10_2_combined['PM10_mean_2020_2021 [\u03bcg/m3]'] = air_PM10_2_combined.mean(axis='columns')
+
+air_PM10_1_combined['date'] = air_WAW_2012_final['WAW_PM10_mean'].index
+air_PM10_1_combined['date_M_D'] = air_PM10_1_combined['date'].dt.strftime('%m-%d')
+
+air_PM10_2_combined['date'] = air_WAW_2020_final['WAW_PM10_mean'].index
+air_PM10_2_combined['date_M_D'] = air_PM10_2_combined['date'].dt.strftime('%m-%d')
+
+air_SO2_1_combined['WAW_SO2_mean_2012 [\u03bcg/m3]'] = air_WAW_2012_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2013 [\u03bcg/m3]'] = air_WAW_2013_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2014 [\u03bcg/m3]'] = air_WAW_2014_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2015 [\u03bcg/m3]'] = air_WAW_2015_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2016 [\u03bcg/m3]'] = air_WAW_2016_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2017 [\u03bcg/m3]'] = air_WAW_2017_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2018 [\u03bcg/m3]'] = air_WAW_2018_final['WAW_SO2_mean'].values
+air_SO2_1_combined['WAW_SO2_mean_2019 [\u03bcg/m3]'] = air_WAW_2019_final['WAW_SO2_mean'].values
+
+air_SO2_2_combined['WAW_SO2_mean_2020 [\u03bcg/m3]'] = air_WAW_2020_final['WAW_SO2_mean'].values
+air_SO2_2_combined['WAW_SO2_mean_2021 [\u03bcg/m3]'] = air_WAW_2021_final['WAW_SO2_mean'].values
+
+air_SO2_1_combined['SO2_mean_2012_2019 [\u03bcg/m3]'] = air_SO2_1_combined.mean(axis='columns')
+air_SO2_2_combined['SO2_mean_2020_2021 [\u03bcg/m3]'] = air_SO2_2_combined.mean(axis='columns')
+
+air_SO2_1_combined['date'] = air_WAW_2012_final['WAW_SO2_mean'].index
+air_SO2_1_combined['date_M_D'] = air_SO2_1_combined['date'].dt.strftime('%m-%d')
+
+air_SO2_2_combined['date'] = air_WAW_2020_final['WAW_SO2_mean'].index
+air_SO2_2_combined['date_M_D'] = air_SO2_2_combined['date'].dt.strftime('%m-%d')
+
+air_CO_1_combined['WAW_CO_mean_2012 [mg/m3]'] = air_WAW_2012_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2013 [mg/m3]'] = air_WAW_2013_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2014 [mg/m3]'] = air_WAW_2014_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2015 [mg/m3]'] = air_WAW_2015_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2016 [mg/m3]'] = air_WAW_2016_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2017 [mg/m3]'] = air_WAW_2017_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2018 [mg/m3]'] = air_WAW_2018_final['WAW_CO_mean'].values
+air_CO_1_combined['WAW_CO_mean_2019 [mg/m3]'] = air_WAW_2019_final['WAW_CO_mean'].values
+
+air_CO_2_combined['WAW_CO_mean_2020 [mg/m3]'] = air_WAW_2020_final['WAW_CO_mean'].values
+air_CO_2_combined['WAW_CO_mean_2021 [mg/m3]'] = air_WAW_2021_final['WAW_CO_mean'].values
+
+air_CO_1_combined['CO_mean_2012_2019 [mg/m3]'] = air_CO_1_combined.mean(axis='columns')
+air_CO_2_combined['CO_mean_2020_2021 [mg/m3]'] = air_CO_2_combined.mean(axis='columns')
+
+air_CO_1_combined['date'] = air_WAW_2012_final['WAW_CO_mean'].index
+air_CO_1_combined['date_M_D'] = air_CO_1_combined['date'].dt.strftime('%m-%d')
+
+air_CO_2_combined['date'] = air_WAW_2020_final['WAW_CO_mean'].index
+air_CO_2_combined['date_M_D'] = air_CO_2_combined['date'].dt.strftime('%m-%d')
+
+air_O3_1_combined['WAW_O3_mean_2012 [\u03bcg/m3]'] = air_WAW_2012_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2013 [\u03bcg/m3]'] = air_WAW_2013_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2014 [\u03bcg/m3]'] = air_WAW_2014_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2015 [\u03bcg/m3]'] = air_WAW_2015_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2016 [\u03bcg/m3]'] = air_WAW_2016_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2017 [\u03bcg/m3]'] = air_WAW_2017_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2018 [\u03bcg/m3]'] = air_WAW_2018_final['WAW_O3_mean'].values
+air_O3_1_combined['WAW_O3_mean_2019 [\u03bcg/m3]'] = air_WAW_2019_final['WAW_O3_mean'].values
+
+air_O3_2_combined['WAW_O3_mean_2020 [\u03bcg/m3]'] = air_WAW_2020_final['WAW_O3_mean'].values
+air_O3_2_combined['WAW_O3_mean_2021 [\u03bcg/m3]'] = air_WAW_2021_final['WAW_O3_mean'].values
+
+
+air_O3_1_combined['O3_mean_2012_2019 [\u03bcg/m3]'] = air_O3_1_combined.mean(axis='columns')
+air_O3_2_combined['O3_mean_2020_2021 [\u03bcg/m3]'] = air_O3_2_combined.mean(axis='columns')
+
+air_O3_1_combined['date'] = air_WAW_2012_final['WAW_O3_mean'].index
+air_O3_1_combined['date_M_D'] = air_O3_1_combined['date'].dt.strftime('%m-%d')
+
+air_O3_2_combined['date'] = air_WAW_2020_final['WAW_O3_mean'].index
+air_O3_2_combined['date_M_D'] = air_O3_2_combined['date'].dt.strftime('%m-%d')
+
+air_final = pd.DataFrame(index=air_NO2_1_combined.index, columns=('date', 'date_M_D',
+                                                            'NO2_mean_2012_2019 [\u03bcg/m3]', 'NO2_mean_2020_2021 [\u03bcg/m3]',
+                                                            'PM2.5_mean_2012_2019 [\u03bcg/m3]', 'PM2.5_mean_2020_2021 [\u03bcg/m3]',
+                                                            'PM10_mean_2012_2019 [\u03bcg/m3]', 'PM10_mean_2020_2021 [\u03bcg/m3]',
+                                                            'SO2_mean_2012_2019 [\u03bcg/m3]', 'SO2_mean_2020_2021 [\u03bcg/m3]',
+                                                            'CO_mean_2012_2019 [mg/m3]', 'CO_mean_2020_2021 [mg/m3]',
+                                                            'O3_mean_2012_2019 [\u03bcg/m3]', 'O3_mean_2020_2021 [\u03bcg/m3]'))
+
+air_final['date'] = air_WAW_2012_final['WAW_O3_mean'].index
+air_final['date_M_D'] = air_final['date'].dt.strftime('%m-%d')
+air_final['NO2_mean_2012_2019 [\u03bcg/m3]'] = air_NO2_1_combined['NO2_mean_2012_2019 [\u03bcg/m3]']
+air_final['NO2_mean_2020_2021 [\u03bcg/m3]'] = air_NO2_2_combined['NO2_mean_2020_2021 [\u03bcg/m3]']
+air_final['PM2.5_mean_2012_2019 [\u03bcg/m3]'] = air_PM25_1_combined['PM2.5_mean_2012_2019 [\u03bcg/m3]']
+air_final['PM2.5_mean_2020_2021 [\u03bcg/m3]'] = air_PM25_2_combined['PM2.5_mean_2020_2021 [\u03bcg/m3]']
+air_final['PM10_mean_2012_2019 [\u03bcg/m3]'] = air_PM10_1_combined['PM10_mean_2012_2019 [\u03bcg/m3]']
+air_final['PM10_mean_2020_2021 [\u03bcg/m3]'] = air_PM10_2_combined['PM10_mean_2020_2021 [\u03bcg/m3]']
+air_final['SO2_mean_2012_2019 [\u03bcg/m3]'] = air_SO2_1_combined['SO2_mean_2012_2019 [\u03bcg/m3]']
+air_final['SO2_mean_2020_2021 [\u03bcg/m3]'] = air_SO2_2_combined['SO2_mean_2020_2021 [\u03bcg/m3]']
+air_final['CO_mean_2012_2019 [mg/m3]'] = air_CO_1_combined['CO_mean_2012_2019 [mg/m3]']
+air_final['CO_mean_2020_2021 [mg/m3]'] = air_CO_2_combined['CO_mean_2020_2021 [mg/m3]']
+air_final['O3_mean_2012_2019 [\u03bcg/m3]'] = air_O3_1_combined['O3_mean_2012_2019 [\u03bcg/m3]']
+air_final['O3_mean_2020_2021 [\u03bcg/m3]'] = air_O3_2_combined['O3_mean_2020_2021 [\u03bcg/m3]']
+
+fig, (ax1, ax2, ax3, ax4, ax5, ax6) = plt.subplots(nrows=6, ncols=1, figsize=(30,17), sharex=True)
+fig.suptitle('\nDaily concentration of air pollutants (components of Air Quality Index) in Warsaw, Poland', y = 0.95, fontsize=24)
+fig.supxlabel('Time of the year', y=0.06, size=20)
+ax1.plot(air_final['date_M_D'], air_final['NO2_mean_2012_2019 [\u03bcg/m3]'], color='grey', alpha=0.05)
+ax1.fill_betweenx(y=range(0,80,8), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax1.fill_betweenx(y=range(0,80,8), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax1.fill_between(air_final['date_M_D'],  0, air_final['NO2_mean_2012_2019 [\u03bcg/m3]'], facecolor='grey', alpha=0.3, label='NO2 mean air concentration for period 2012-2019')
+ax1.plot(air_final['date_M_D'], air_final['NO2_mean_2020_2021 [\u03bcg/m3]'], linewidth=2, color='royalblue', label='NO2 mean air concentration for period 2020-2021')
+ax1.set_ylabel('\nNO2 [\u03bcg/m3]', labelpad=12, size=15)
+ax1.margins(0.005, 0.005)
+ax1.legend(loc='upper center', frameon=False, fontsize=12)
+
+months = mdates.MonthLocator()
+ax1.xaxis.set_major_locator(months)
+ax1.xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=16))
+ax1.xaxis.set_major_formatter(ticker.NullFormatter())
+ax1.xaxis.set_minor_formatter(mdates.DateFormatter('%b'))
+
+ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax2.plot(air_final['date_M_D'], air_final['SO2_mean_2012_2019 [\u03bcg/m3]'], color='grey', alpha=0.05)
+ax2.fill_betweenx(y=range(0,15,2), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax2.fill_betweenx(y=range(0,15,2), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax2.fill_between(air_final['date_M_D'],  0, air_final['SO2_mean_2012_2019 [\u03bcg/m3]'], facecolor='grey', alpha=0.3, label='SO2 mean air concentration for period 2012-2019')
+ax2.plot(air_final['date_M_D'], air_final['SO2_mean_2020_2021 [\u03bcg/m3]'], linewidth=2, color='green', label='SO2 mean air concentration for period 2020-2021')
+ax2.set_ylabel('\nSO2 [\u03bcg/m3]', labelpad=12, size=15)
+ax2.legend(loc='upper center', frameon=False, fontsize=12)
+ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax3.plot(air_final['date_M_D'], air_final['PM2.5_mean_2012_2019 [\u03bcg/m3]'], color='grey', alpha=0.1)
+ax3.fill_betweenx(y=range(0,100), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax3.fill_betweenx(y=range(0,100), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax3.fill_between(air_final['date_M_D'],  0, air_final['PM2.5_mean_2012_2019 [\u03bcg/m3]'], facecolor='grey', alpha=0.3, label='PM2.5 mean air concentration for period 2012-2019')
+ax3.plot(air_final['date_M_D'], air_final['PM2.5_mean_2020_2021 [\u03bcg/m3]'], linewidth=2, color='peru', label='PM2.5 mean air concentration for period 2020-2021')
+ax3.set_ylabel('\nPM2.5 [\u03bcg/m3]', labelpad=12, size=15)
+ax3.legend(loc='upper center', frameon=False, fontsize=12)
+ax3.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax4.plot(air_final['date_M_D'], air_final['PM10_mean_2012_2019 [\u03bcg/m3]'], color='grey', alpha=0.1)
+ax4.fill_betweenx(y=range(0,100), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax4.fill_betweenx(y=range(0,100), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax4.fill_between(air_final['date_M_D'],  0, air_final['PM10_mean_2012_2019 [\u03bcg/m3]'], facecolor='grey', alpha=0.3, label='PM10 mean air concentration for period 2012-2019')
+ax4.plot(air_final['date_M_D'], air_final['PM10_mean_2020_2021 [\u03bcg/m3]'], linewidth=2, color='sienna', label='PM10 mean air concentration for period 2020-2021')
+ax4.set_ylabel('\nPM10 [\u03bcg/m3]', labelpad=12, size=15)
+ax4.legend(loc='upper center', frameon=False, fontsize=12)
+ax4.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax5.plot(air_final['date_M_D'], air_final['O3_mean_2012_2019 [\u03bcg/m3]'], color='grey', alpha=0.1)
+ax5.fill_betweenx(y=range(0,140), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax5.fill_betweenx(y=range(0,140), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax5.fill_between(air_final['date_M_D'],  0, air_final['O3_mean_2012_2019 [\u03bcg/m3]'], facecolor='grey', alpha=0.3, label='O3 mean air concentration for period 2012-2019')
+ax5.plot(air_final['date_M_D'], air_final['O3_mean_2020_2021 [\u03bcg/m3]'], linewidth=2, color='steelblue', label='O3 mean air concentration for period 2020-2021')
+ax5.set_ylabel('\nO3 [\u03bcg/m3]', labelpad=5, size=15)
+ax5.legend(loc='upper center', frameon=False, fontsize=12)
+ax5.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax6.plot(air_final['date_M_D'], air_final['CO_mean_2012_2019 [mg/m3]'], color='grey', alpha=0.1)
+ax6.fill_betweenx(y=range(0,3), x1=['01-01'], x2=['01-17'],  facecolor='red', alpha=0.07)
+ax6.fill_betweenx(y=range(0,3), x1=['03-20'], x2=['04-25'],  facecolor='red', alpha=0.07)
+ax6.fill_between(air_final['date_M_D'],  0, air_final['CO_mean_2012_2019 [mg/m3]'], facecolor='grey', alpha=0.3, label='CO mean air concentration for period 2012-2019')
+ax6.plot(air_final['date_M_D'], air_final['CO_mean_2020_2021 [mg/m3]'], linewidth=2, color='purple', label='CO mean air concentration for period 2020-2021')
+ax6.set_ylabel('\nCO [mg/m3]', labelpad=20, size=15)
+ax6.legend(loc='upper center', frameon=False, fontsize=12)
+ax6.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+group_of_axes = (ax1, ax2, ax3, ax4, ax5, ax6)
+for item in group_of_axes:
+    item.spines['top'].set_visible(False)
+    item.spines['right'].set_visible(False)
+    item.tick_params(axis='x', which='minor', tick1On=False, tick2On=False, labelsize=15)
+    item.tick_params(axis='y', which='major', tick1On=True, labelsize=13)
+
+ax1.annotate(
+    'Periods of COVID-19\ncountry-wide lockdowns\nin 2020 and 2021', fontsize=12, xy=(16, 65), xytext=(47, 65), xycoords='data', ha="center", va="center", 
+    bbox=dict(boxstyle="round", fc='red', alpha=0.07, ec="none"),
+    arrowprops=dict(arrowstyle='Fancy, head_length=1.5, head_width=1.5, tail_width=1.2', fc='red', alpha=0.1, ec="none", patchA=None, relpos=(-0.03, 0.5), connectionstyle="arc3,rad=0"))
+
+ax1.annotate('', xy=(78, 65), xytext=(63.5, 65), xycoords='data', ha="center", va="center", 
+    bbox=dict(boxstyle="round", fc='red', alpha=0.07, ec="none"),
+    arrowprops=dict(arrowstyle='Fancy, head_length=1.5, head_width=1.5, tail_width=1.2', fc='red', alpha=0.1, ec="none", connectionstyle="arc3,rad=0"))
