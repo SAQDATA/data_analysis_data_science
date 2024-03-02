@@ -1,0 +1,63 @@
+future_connections = pd.read_csv('assets/Future_Connections.csv', index_col=0, converters={0: eval})
+future_connections.head(10)
+
+def new_connections_predictions():
+    from sklearn.preprocessing import StandardScaler, LabelEncoder
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import train_test_split
+    from sklearn.linear_model import LogisticRegression
+
+    d = {'person':pd.Series(data=list(nx.nodes(G)), index = [i for i in nx.nodes(G)]),
+         'department':pd.Series(data=[nx.nodes(G)(data=True)[i]['Department'] for i in nx.nodes(G)], index = [i for i in nx.nodes(G)])}
+    people_df_2 = pd.DataFrame(data=d) 
+
+    connections_df = future_connections.copy()
+    connections_df['orig iloc'] = range(len(connections_df))
+    connections_df['orig index'] = connections_df.index
+    connections_df['node A'] = [a for a,b in connections_df.index]
+    connections_df['node B'] = [b for a,b in connections_df.index]
+    connections_df['shortest_path'] = pd.Series()
+    connections_df['nr com neigh'] = pd.Series()
+    connections_df['pref attachment'] = pd.Series()
+    connections_df['jaccard'] = pd.Series()
+    connections_df['resource allocarion'] = pd.Series()
+
+    connections_df = connections_df.sort_index()
+
+    for i in range(len(connections_df)):
+        try:
+            connections_df['shortest_path'].values[i] = nx.shortest_path_length(G, connections_df['node A'].values[i], connections_df['node B'].values[i])
+        except:
+            connections_df['shortest_path'].values[i] = len(connections_df)
+        connections_df['nr com neigh'].values[i] = len(sorted(nx.common_neighbors(G, connections_df['node A'].values[i], connections_df['node B'].values[i])))
+
+    connections_df['pref attachment'] = [c for a,b,c in list(nx.preferential_attachment(G))]
+    connections_df['jaccard'] = [c for a,b,c in list(nx.jaccard_coefficient(G))]
+    connections_df['resource allocarion'] = [c for a,b,c in list(nx.resource_allocation_index(G))]
+
+    connections_df_2 = connections_df.sort_values(by='orig iloc')
+    connections_unknown_df = connections_df_2[connections_df_2.isnull().any(axis=1)]
+    established_connections_df = connections_df_2.dropna()
+
+    X = established_connections_df[['shortest_path', 'nr com neigh', 'pref attachment', 'jaccard', 'resource allocarion']]
+    y = established_connections_df[['Future Connection']]
+    XX = connections_unknown_df[['shortest_path', 'nr com neigh', 'pref attachment', 'jaccard', 'resource allocarion']]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y , test_size=0.25, random_state=0)
+
+    clf_SS = StandardScaler()
+    X_train = clf_SS.fit_transform(X_train)    
+    X_test = clf_SS.transform(X_test)
+
+    clf_RF = RandomForestClassifier(random_state=11, n_estimators=4, max_depth=9)
+    clf_RF.fit(X_train, y_train)
+    #clf_LR = LogisticRegression(C=0.01, random_state=0)
+    #clf_LR.fit(X_train, y_train.values.ravel()) 
+
+    connections_unknown_df['Future Connection'] = pd.Series(clf_RF.predict_proba(XX)[:, 1]).values
+    solution = pd.Series(connections_unknown_df['Future Connection'])
+
+
+    # YOUR CODE HERE
+    #raise NotImplementedError()
+    return solution
