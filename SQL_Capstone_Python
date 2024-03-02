@@ -1,0 +1,329 @@
+import pandas as pd
+import re
+sports_df = pd.read_csv('assets/Sport_Stats/athlete_events.csv')
+sports_df
+medals_df = sports_df.dropna()
+medals_df
+medals_df.info()
+medals_df['Name'] = medals_df['Name'].astype('string')
+medals_df['Sex'] = medals_df['Sex'].astype('string')
+medals_df['Team'] = medals_df['Team'].astype('string')
+medals_df['NOC'] = medals_df['NOC'].astype('string')
+medals_df['Games'] = medals_df['Games'].astype('string')
+medals_df['Season'] = medals_df['Season'].astype('string')
+medals_df['City'] = medals_df['City'].astype('string')
+medals_df['Sport'] = medals_df['Sport'].astype('string')
+medals_df['Event'] = medals_df['Event'].astype('string')
+medals_df['Medal'] = medals_df['Medal'].astype('string')
+for i in range(len(medals_df)):
+    medals_df['Name'].iloc[i] = medals_df['Name'].iloc[i].strip()
+    medals_df['Sex'].iloc[i] = medals_df['Sex'].iloc[i].strip()
+    medals_df['Team'].iloc[i] = medals_df['Team'].iloc[i].strip()
+    medals_df['NOC'].iloc[i] = medals_df['NOC'].iloc[i].strip()
+    medals_df['Games'].iloc[i] = medals_df['Games'].iloc[i].strip()
+    medals_df['Season'].iloc[i] = medals_df['Season'].iloc[i].strip()
+    medals_df['City'].iloc[i] = medals_df['City'].iloc[i].strip()
+    medals_df['Sport'].iloc[i] = medals_df['Sport'].iloc[i].strip()
+    medals_df['Event'].iloc[i] = medals_df['Event'].iloc[i].strip()
+    medals_df['Medal'].iloc[i] = medals_df['Medal'].iloc[i].strip()
+print(sorted(pd.unique(medals_df['Games'])))
+medals_df = medals_df.drop(['Name', 'Team'], axis=1)
+medals_df
+pd.unique(medals_df['Sex'])
+NOC_regions = pd.read_csv('assets/Sport_Stats/noc_regions.csv')
+NOC_regions
+#for item in NOC_regions['NOC']:
+#    medals_df['NOC'] = NOC_regions['region']
+medals_df
+winter_df = medals_df.loc[medals_df['Season'] == 'Winter']
+   
+winter_df
+winter_df.to_csv('assets/Sport_Stats/winter_olympics.csv')
+summer_df = medals_df.loc[medals_df['Season'] == 'Summer']
+summer_df
+summer_df.to_csv('assets/Sport_Stats/summer_olympics.csv')
+winter_df
+summer_df
+hosts_df = medals_df[['Games', 'City']]
+hosts_df
+games_df = medals_df[['Games','Year','Season','ID']]
+games_df
+events_df = medals_df[['Games','Event','Sport']]
+events_df
+people_df = medals_df[['ID','Age','Height','Weight']]
+people_df
+noc_df = NOC_regions[['NOC','region']]
+noc_df
+country_df = medals_df[['ID','NOC']]
+country_df
+prizes_df = medals_df[['Medal','Games']]
+prizes_df
+from pandasql import sqldf
+pysqldf = lambda q: sqldf(q, globals())
+display(pysqldf("SELECT * FROM games_df WHERE Season = 'Summer';"))
+display(pysqldf("SELECT * FROM prizes_df"))
+display(pysqldf('''SELECT
+                     Sex,
+                     COUNT(*) AS All_Medals,
+                     ROUND(COUNT(*)*100.0/SUM(COUNT(*)) over (),2) AS '%'
+                   FROM medals_df
+                   GROUP BY Sex'''))
+display(pysqldf('''SELECT
+                     Sex,
+                     COUNT(*) AS Winter_Medals,
+                     ROUND(COUNT(*)*100.0/SUM(COUNT(*)) over (),2) AS '%'
+                   FROM winter_df
+                   GROUP BY Sex'''))
+display(pysqldf('''SELECT
+                     Sex,
+                     COUNT(*) AS Summer_Medals,
+                     ROUND(COUNT(*)*100.0/SUM(COUNT(*)) over (),2) AS '%'
+                   FROM summer_df
+                   GROUP BY Sex'''))
+# Let's check how many athletes won the medals, 
+# and how many medals in total, and what medals:
+display(pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM summer_df
+                   WHERE Year >= 2000                   
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC'''))              
+### In WINTER:
+display(pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,                    
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM winter_df                   
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC'''))
+#### In SUMMER:
+display(pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM summer_df                   
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC'''))
+### Now let's check if there was any athlete who won medals in both winter and summer Olympics:
+display(pysqldf('''SELECT
+                    summer_df.ID,
+                    summer_df.Sex,
+                    summer_df.Games,
+                    summer_df.Event,
+                    summer_df.Medal,
+                    winter_df.Games,
+                    winter_df.Event,
+                    winter_df.Medal           
+                   FROM summer_df
+                   JOIN winter_df
+                   ON summer_df.id = winter_df.id                  
+                   GROUP BY summer_df.id
+                   ORDER BY summer_df.id DESC'''))
+###############
+display(pysqldf('''SELECT
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM medals_df
+                   WHERE Year >= 2000                   
+                   GROUP BY Country
+                   ORDER BY Medals_won DESC
+                   LIMIT 15'''))   
+display(pysqldf('''SELECT
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM winter_df
+                   WHERE Year >= 2000                   
+                   GROUP BY Country
+                   ORDER BY Medals_won DESC
+                   LIMIT 20'''))   
+display(pysqldf('''SELECT
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM summer_df
+                   WHERE Year >= 2000                   
+                   GROUP BY Country
+                   ORDER BY Medals_won DESC
+                   LIMIT 20'''))   
+winter_df
+display(pysqldf('''SELECT
+                     summer_df.NOC AS Country,
+                     summer_df.Year AS Year,
+                     COUNT(*) + winter.Medals_won AS TOTAL_MEDALS,
+                     COUNT(*) AS SUMMER_Medals,
+                     SUM(CASE WHEN summer_df.Medal = 'Gold' THEN 1 ELSE 0 END) AS Summer_Gold,
+                     SUM(CASE WHEN summer_df.Medal = 'Silver' THEN 1 ELSE 0 END) AS Summer_Silver,
+                     SUM(CASE WHEN summer_df.Medal = 'Bronze' THEN 1 ELSE 0 END) AS Summer_Bronze,
+                     winter.Medals_won AS WINTER_Medals,
+                     winter.Winter_Gold,
+                     winter.Winter_Silver,
+                     winter.Winter_Bronze
+                   FROM summer_df
+                   JOIN
+                    (SELECT
+                      NOC AS Country,
+                      Year AS Year,
+                      COUNT(*) AS Medals_won,
+                      SUM(CASE WHEN winter_df.Medal = 'Gold' THEN 1 ELSE 0 END) AS Winter_Gold,
+                      SUM(CASE WHEN winter_df.Medal = 'Silver' THEN 1 ELSE 0 END) AS Winter_Silver,
+                      SUM(CASE WHEN winter_df.Medal = 'Bronze' THEN 1 ELSE 0 END) AS Winter_Bronze
+                     FROM winter_df
+                     WHERE winter_df.Year >= 2000                   
+                     GROUP BY Country) AS winter
+                   ON summer_df.NOC = Country
+                   WHERE summer_df.Year >= 2000                   
+                   GROUP BY summer_df.NOC
+                   ORDER BY TOTAL_MEDALS DESC'''))         
+display(pysqldf('''SELECT
+                     summer_df.NOC AS Country,
+                     summer_df.Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN summer_df.Medal = 'Gold' THEN 1 ELSE 0 END) AS S_Gold_medals,
+                     SUM(CASE WHEN summer_df.Medal = 'Silver' THEN 1 ELSE 0 END) AS S_Silver_medals,
+                     SUM(CASE WHEN summer_df.Medal = 'Bronze' THEN 1 ELSE 0 END) AS S_Bronze_medals
+                   FROM summer_df
+                   JOIN
+                    (SELECT
+                     winter_df.NOC AS Country,
+                     winter_df.Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN winter_df.Medal = 'Gold' THEN 1 ELSE 0 END) AS W_Gold_medals,
+                     SUM(CASE WHEN winter_df.Medal = 'Silver' THEN 1 ELSE 0 END) AS W_Silver_medals,
+                     SUM(CASE WHEN winter_df.Medal = 'Bronze' THEN 1 ELSE 0 END) AS W_Bronze_medals
+                    FROM winter_df
+                    WHERE winter_df.Year >= 2000                   
+                    GROUP BY Country
+                    ORDER BY Medals_won DESC
+                    LIMIT 15) as winter
+                   ON summer_df.NOC = Country
+                   WHERE summer_df.Year >= 2000                   
+                   GROUP BY Country
+                   ORDER BY Medals_won DESC
+                   LIMIT 15''')) 
+display(pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     Sex,
+                     Weight,
+                     Height,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM medals_df                   
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC'''))
+medals_by_athletes = pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     Sex,
+                     Weight,
+                     Height,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM medals_df                   
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC''')
+medals_by_athletes
+medals_women = pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     Sex,
+                     Weight,
+                     Height,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM medals_df
+                   WHERE Sex = 'F'                  
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC''')
+medals_women
+medals_men = pysqldf('''SELECT
+                     DISTINCT(id) AS Athlete_ID,
+                     Sex,
+                     Weight,
+                     Height,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM medals_df
+                   WHERE Sex = 'M'                  
+                   GROUP BY Athlete_ID
+                   ORDER BY Medals_won DESC''')
+medals_men
+weight_M = medals_men.Weight
+height_M = medals_men.Height
+won_M = medals_men.Medals_won
+weight_F = medals_women.Weight
+height_F = medals_women.Height
+won_F = medals_women.Medals_won
+import numpy as np
+medals_weight_M = np.corrcoef(won_M, weight_M)
+medals_weight_M
+medals_height_M = np.corrcoef(won_M, height_M)
+medals_height_M
+medals_weight_F = np.corrcoef(won_F, weight_F)
+medals_weight_F
+medals_height_F = np.corrcoef(won_F, height_F)
+medals_height_F
+medals_summer = pysqldf('''SELECT
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM summer_df                                   
+                   GROUP BY Country
+                   ORDER BY Country''')
+medals_summer
+medals_summer_new = medals_summer.set_index('Country')
+medals_summer_new.head(10)
+medals_winter = pysqldf('''SELECT
+                     NOC AS Country,
+                     Year AS Year,
+                     COUNT(*) AS Medals_won,
+                     SUM(CASE WHEN Medal = 'Gold' THEN 1 ELSE 0 END) AS Gold_medals,
+                     SUM(CASE WHEN Medal = 'Silver' THEN 1 ELSE 0 END) AS Silver_medals,
+                     SUM(CASE WHEN Medal = 'Bronze' THEN 1 ELSE 0 END) AS Bronze_medals
+                   FROM winter_df                                   
+                   GROUP BY Country
+                   ORDER BY Country''')
+medals_winter_new = medals_winter.set_index('Country')
+medals_winter_new.index.values[0]
+medals_winter_new.loc['AUS']
+medals_winter_new['medals_in_summer'] = pd.Series()
+medals_winter_new
+for item in medals_winter_new.index.values:
+    try:
+        medals_winter_new['medals_in_summer'].loc[item] = medals_summer_new['Medals_won'].loc[item]
+    except:
+        continue
+medals_winter_new = medals_winter_new.fillna(0)
+medals_winter_new
+won_winter = medals_winter_new.Medals_won
+won_summer = medals_winter_new.medals_in_summer
+np.corrcoef(won_winter, won_summer)
