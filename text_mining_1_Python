@@ -1,0 +1,299 @@
+import pandas as pd
+
+doc = []
+with open('assets/dates.txt') as file:
+    for line in file:
+        doc.append(line)
+
+df = pd.Series(doc)
+df.head(10)
+
+
+def date_sorter():
+    
+    order = None
+    
+    working_df = df.copy()# YOUR CODE HERE
+
+    working_df[321] = '6/2/1999'
+
+    import re
+    
+    # PATTERNS
+    pattern_1 = '.*(\d{2}[/-]\d{1,2}[/-]\d{4}).*'#format daty: 04/20/2009; 04/20/09; 4/20/09; 4/3/09 
+    pattern_1a = '.*(\d{2}[/-]\d{1,2}[/-]\d{2}).*'#format daty: 04/20/2009; 04/20/09; 4/20/09; 4/3/09
+    pattern_1b = '.*(\d{1}[/-]\d{1,2}[/-]\d{4}).*'#format daty: 04/20/2009; 04/20/09; 4/20/09; 4/3/09 
+    pattern_1c = '.*(\d{1}[/-]\d{1,2}[/-]\d{2}).*'#format daty: 04/20/2009; 04/20/09; 4/20/09; 4/3/09
+    pattern_1d = '.*\((\d{1}[/-]\d{1,2}[/-]\d{2})\).*'
+
+    pattern_2 = '.*[ \.]([A-Z]{1}[a-z]{2,}[- \.]+\d{1,2}[-, ]+\d{4})[\W].*'#format daty: Mar-20-2009; Mar 20, 2009; March 20, 2009;  Mar. 20, 2009; Mar 20 2009;
+    pattern_2a = '.*[ \.]([A-Z]{1}[a-z]{2,}[- \.]+\d{1,2}[-, ]+\d{2})[\W].*'
+    pattern_2b = '(^[A-Z]{1}[a-z]{2,}[- \.]+\d{1,2}[-, ]+\d{4}).*'#format daty: Mar-20-2009; Mar 20, 2009; March 20, 2009;  Mar. 20, 2009; Mar 20 2009;
+    pattern_2c = '(^[A-Z]{1}[a-z]{2,}[- \.]+\d{1,2}[-, ]+\d{2}).*'
+
+    pattern_3 = '.*(\d{2}[ ]+[A-Z]{1}[a-z]{2,}[ \.]+\d{4}).*'#format daty: 20 Mar 2009; 20 March 2009; 20 Mar. 2009; 20 March, 2009
+    pattern_3a = '.*(\d{2}[ ]+[A-Z]{1}[a-z]{2,}[ \.]+\d{2}).*'#format daty: 20 Mar 2009; 20 March 2009; 20 Mar. 2009; 20 March, 2009
+    pattern_3b = '.*(\d{1}[ ]+[A-Z]{1}[a-z]{2,}[ \.]+\d{4}).*'#format daty: 20 Mar 2009; 20 March 2009; 20 Mar. 2009; 20 March, 2009
+    pattern_3c = '.*(\d{1}[ ]+[A-Z]{1}[a-z]{2,}[ \.]+\d{2}).*'#format daty: 20 Mar 2009; 20 March 2009; 20 Mar. 2009; 20 March, 2009
+
+    pattern_4 = '(^[A-Z]{1}[a-z]{2,}[ ]+\d{2}[a-z]{2}[, ]+\d{4}).*'#format daty: Mar 20th, 2009; Mar 21st, 2009; Mar 22nd, 2009
+    pattern_4a = '(^[A-Z]{1}[a-z]{2,}[ ]+\d{1}[a-z]{2}[, ]+\d{4}).*'
+    pattern_4b = '(^[A-Z]{1}[a-z]{2,}[ ]+\d{2}[a-z]{2}[, ]+\d{2}).*'
+    pattern_4c = '(^[A-Z]{1}[a-z]{2,}[ ]+\d{1}[a-z]{2}[, ]+\d{2}).*'
+    pattern_4d = '.*([A-Z]{1}[a-z]{2,}[ ]+\d{2}[a-z]{2}[, ]+\d{4}).*'#format daty: Mar 20th, 2009; Mar 21st, 2009; Mar 22nd, 2009
+    pattern_4e = '.*([A-Z]{1}[a-z]{2,}[ ]+\d{1}[a-z]{2}[, ]+\d{4}).*'
+    pattern_4f = '.*([A-Z]{1}[a-z]{2,}[ ]+\d{2}[a-z]{2}[, ]+\d{2}).*'
+    pattern_4g = '.*([A-Z]{1}[a-z]{2,}[ ]+\d{1}[a-z]{2}[, ]+\d{2}).*'
+
+    pattern_5 = '.*([A-Z]{1}[a-z]{2,}[ \,]*\d{4}).*'#format daty: Feb 2009; Sep 2009; Oct 2010, włącznie z pełnymi nazwami miesięcy, np. October
+    pattern_5a = '.*([A-Z]{1}[a-z]{2,}[ \,]*\d{2}).*'#format daty: Feb 2009; Sep 2009; Oct 2010, włącznie z pełnymi nazwami miesięcy, np. October
+    pattern_5b = '(^[0-9]*[A-Z]{1}[a-z]{2,}[ \,]*\d{4}).*'
+    pattern_5c = '(^[A-Z]{1}[a-z]{2,}[ \,]*\d{2}).*'
+    pattern_5d = '.+[ \(]([A-Z]{1}[a-z]{2,}[ \,]*\d{4})[\W\.]*' 
+    pattern_5e = '.+[ \(]([A-Z]{1}[a-z]{2,}[ \,]*\d{2})[\W\.]*'
+
+    pattern_5f = '^[A-Za-z]{1}([A-Z]{1}[a-z]{2,}[ ]\d{4})[ :]+.*'#[ ]*[\W].*'
+    pattern_5g = '^[A-Za-z]{1}([A-Z]{1}[a-z]{2,}[ ]\d{2})[ :]+.*'#[ ]*[\W].*'
+
+    pattern_6 = '.*(\d{2}[/]+\d{4}).*'#format daty: 6/2008; 12/2009
+    pattern_6a = '.*(\d{1}[/]+\d{4}).*'
+    pattern_6b = '.*(\d{2}[/]+\d{2}).*'
+    pattern_6c = '.*(\d{1}[/]+\d{2}).*'
+
+    pattern_7 = '.*(\d{4}).*'#format daty: 2009; 2010
+    pattern_7a = 'sSince.*(\d{4}).*'
+    pattern_7b = '. Age 16,.*(\d{4}).*'
+    pattern_7c = '.Age, 19,.*(\d{4}).*'
+    pattern_7d = '.*(\d{4}).*Disorders 300.3.*'
+
+    pattern_8 = '(^\d{4})'#format daty: 2008 na początku linii
+
+    for i in range(len(df)):
+        working_df[i] = working_df[i].strip()
+        if re.search(pattern_1, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_1, working_df[i])
+        elif re.search(pattern_1a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_1a, working_df[i])
+        elif re.search(pattern_1b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_1b, working_df[i])
+        elif re.search(pattern_1d, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_1d, working_df[i])
+        elif re.search(pattern_1c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_1c, working_df[i])
+
+        elif re.search(pattern_7a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_7a, working_df[i])
+        elif re.search(pattern_7b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_7b, working_df[i])
+        elif re.search(pattern_7c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_7c, working_df[i])
+        elif re.search(pattern_7d, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_7d, working_df[i])
+
+        elif re.search(pattern_2b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_2b, working_df[i])
+        elif re.search(pattern_2c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_2c, working_df[i])
+        elif re.search(pattern_2, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_2, working_df[i])
+        elif re.search(pattern_2a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_2a, working_df[i])
+
+        elif re.search(pattern_3, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_3, working_df[i])
+        elif re.search(pattern_3a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_3a, working_df[i])
+        elif re.search(pattern_3b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_3b, working_df[i])
+        elif re.search(pattern_3c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_3c, working_df[i])
+
+        elif re.search(pattern_4, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4, working_df[i])
+        elif re.search(pattern_4a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4a, working_df[i])
+        elif re.search(pattern_4b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4b, working_df[i])
+        elif re.search(pattern_4c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4c, working_df[i])
+        elif re.search(pattern_4d, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4d, working_df[i])
+        elif re.search(pattern_4e, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4e, working_df[i])
+        elif re.search(pattern_4f, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4f, working_df[i])
+        elif re.search(pattern_4g, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_4g, working_df[i])
+
+        elif re.search(pattern_6, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_6, working_df[i])
+        elif re.search(pattern_6a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_6a, working_df[i])
+        elif re.search(pattern_6b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_6b, working_df[i])
+        elif re.search(pattern_6c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_6c, working_df[i])
+
+        elif re.search(pattern_5f, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5f, working_df[i])
+        elif re.search(pattern_5g, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5g, working_df[i])
+    
+        elif re.search(pattern_5b, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5b, working_df[i])
+        elif re.search(pattern_5c, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5c, working_df[i])
+
+        elif re.search(pattern_5d, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5d, working_df[i])
+        elif re.search(pattern_5e, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5e, working_df[i])
+
+        elif re.search(pattern_5, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5, working_df[i])
+        elif re.search(pattern_5a, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_5a, working_df[i])
+
+        elif re.search(pattern_7, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_7, working_df[i])
+
+        elif re.search(pattern_8, working_df[i]) != None:
+            working_df[i] = re.findall(pattern_8, working_df[i])
+
+    for k in range(len(df)):
+        working_df[k] = ''.join(working_df[k]) 
+    
+    solution = pd.DataFrame(columns = ['orig data', 'year', 'month', 'day', 'new year', 'new month', 'new day', 'new date'], dtype=str)
+    solution['orig data'] = working_df
+
+    solution['year']=solution['year'].apply(str)
+    solution['month']=solution['month'].apply(str)
+    solution['day']=solution['day'].apply(str)
+    solution['new year']=solution['new year'].apply(str)
+    solution['new month']=solution['new month'].apply(str)
+    solution['new day']=solution['new day'].apply(str)
+    solution['new date']=solution['new date'].apply(str)
+
+    date_patt_1 = '\d{1,2}[/-]\d{1,2}[/-]\d{2,4}'
+    date_patt_2 = '\d{1,2}[ ][A-Za-z]+[ ]\d{2,4}'
+    date_patt_3 = '[A-Za-z]+[ \.,]+\d{1,2}[ ,]+\d{2,4}'
+    date_patt_4 = '\w+[ ,]+[ ]*\d{2,4}'
+    date_patt_5 = '\d{1,2}[/]\d{4}$'
+    date_patt_6 = '^\d{4}$'
+    
+    for k in range(len(solution)):
+        if re.search(date_patt_1, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('\d{1,2}[/-]\d{1,2}[/-](\d{2,4})', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = re.findall('(\d{1,2})[/-]\d{1,2}[/-]\d{2,4}', solution.iloc[k,0])#month
+            solution.iloc[k,2] = ''.join(solution.iloc[k,2])
+            solution.iloc[k,3] = re.findall('\d{1,2}[/-](\d{1,2})[/-]\d{2,4}', solution.iloc[k,0])#day
+            solution.iloc[k,3] = ''.join(solution.iloc[k,3])
+        elif re.search(date_patt_2, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('\d{1,2}[ ][A-Za-z]+[ ](\d{2,4})', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = re.findall('\d{1,2}[ ]([A-Za-z]+)[ ]\d{2,4}', solution.iloc[k,0])#month
+            solution.iloc[k,2] = ''.join(solution.iloc[k,2])
+            solution.iloc[k,3] = re.findall('(\d{1,2})[ ][A-Za-z]+[ ]\d{2,4}', solution.iloc[k,0])#day
+            solution.iloc[k,3] = ''.join(solution.iloc[k,3])
+        elif re.search(date_patt_3, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('[A-Za-z]+[ \.,]+\d{1,2}[ ,]+(\d{2,4})', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = re.findall('([A-Za-z]+)[ \.,]+\d{1,2}[ ,]+\d{2,4}', solution.iloc[k,0])#month
+            solution.iloc[k,2] = ''.join(solution.iloc[k,2])
+            solution.iloc[k,3] = re.findall('[A-Za-z]+[ \.,]+(\d{1,2})[ ,]+\d{2,4}', solution.iloc[k,0])#day
+            solution.iloc[k,3] = ''.join(solution.iloc[k,3])
+        elif re.search(date_patt_4, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('\w+[ ,]+[ ]*(\d{2,4})', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = re.findall('(\w+)[ ,]+[ ]*\d{2,4}', solution.iloc[k,0])#month
+            solution.iloc[k,2] = ''.join(solution.iloc[k,2])
+            solution.iloc[k,3] = '01'#day
+        elif re.search(date_patt_5, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('\d{1,2}[/](\d{4})$', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = re.findall('(\d{1,2})[/]\d{4}$', solution.iloc[k,0])#month
+            solution.iloc[k,2] = ''.join(solution.iloc[k,2])
+            solution.iloc[k,3] = '01'#day
+        elif re.search(date_patt_6, solution.iloc[k,0]) != None:
+            solution.iloc[k,1] = re.findall('^\d{4}$', solution.iloc[k,0])#year
+            solution.iloc[k,1] = ''.join(solution.iloc[k,1])
+            solution.iloc[k,2] = '01'#month
+            solution.iloc[k,3] = '01'#day    
+
+    for k in range(len(solution)):
+        if re.search('^\d{2}$', solution.iloc[k,1]) != None:
+            solution.iloc[k,4] = re.findall('^\d{2}$', solution.iloc[k,1])
+            solution.iloc[k,4] = ''.join(solution.iloc[k,4])
+            solution.iloc[k,4] = '19'+ solution.iloc[k,4]
+        else:
+            solution.iloc[k,4] = solution.iloc[k,1]
+
+    for k in range(len(solution)):
+        if re.search('\d{2}', solution.iloc[k,2]) != None:
+            solution.iloc[k,5] = solution.iloc[k,2]
+        elif re.search('^\d{1}$', solution.iloc[k,2]) != None:
+            solution.iloc[k,5] = re.findall('^\d{1}$', solution.iloc[k,2])
+            solution.iloc[k,5] = ''.join(solution.iloc[k,5])
+            solution.iloc[k,5] = '0'+ solution.iloc[k,5]
+        elif re.search('(^\d{1}[A-Za-z]{3}).*', solution.iloc[k,2]) != None:
+            solution.iloc[k,5] = re.findall('^\d{1}([A-Za-z]{3}).*', solution.iloc[k,2])
+            solution.iloc[k,5] = ''.join(solution.iloc[k,5])  
+        elif re.search('(^[A-Za-z]{3}).*', solution.iloc[k,2]) != None:
+            solution.iloc[k,5] = re.findall('([A-Za-z]{3}).*', solution.iloc[k,2])
+            solution.iloc[k,5] = ''.join(solution.iloc[k,5])
+        else:
+            solution.iloc[k,5] = solution.iloc[k,2]
+
+    for k in range(len(solution)):
+        if re.search('(Jan).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '01'       
+        elif re.search('(Feb).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '02'   
+        elif re.search('(Mar).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '03'   
+        elif re.search('(Apr).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '04'   
+        elif re.search('(May).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '05'   
+        elif re.search('(Jun).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '06'   
+        elif re.search('(Jul).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '07'   
+        elif re.search('(Aug).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '08'   
+        elif re.search('(Sep).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '09'   
+        elif re.search('(Oct).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '10'   
+        elif re.search('(Nov).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '11'
+        elif re.search('(Dec).*' , solution.iloc[k,5]) != None:
+            solution.iloc[k,5] = '12'   
+
+
+    for k in range(len(solution)):
+        if re.search('\d{2}', solution.iloc[k,3]) != None:
+            solution.iloc[k,6] = solution.iloc[k,3]
+        elif re.search('^\d{1}$', solution.iloc[k,3]) != None:
+            solution.iloc[k,6] = re.findall('^\d{1}$', solution.iloc[k,3])
+            solution.iloc[k,6] = ''.join(solution.iloc[k,6])
+            solution.iloc[k,6] = '0'+ solution.iloc[k,6]
+        else:
+            solution.iloc[k,6] = solution.iloc[k,3]
+
+    for k in range(len(solution)):
+        solution.iloc[k,7] = solution.iloc[k,7].replace('/','')
+        solution.iloc[k,7] = float(solution.iloc[k,7])
+ 
+    solution['new date'] = solution['new year'] + '/' + solution['new month'] + '/' + solution['new day']
+    solution['original index'] = solution.index
+    solved = solution.sort_values(by = ['new date', 'original index'], ascending=True)
+    #solved_final = solved['new date']
+    solved_final = solved['original index'].reset_index()
+    order = solved_final['original index']
+    
+    #raise NotImplementedError()
+    return order # Your answer here
+
+date_sorter()
